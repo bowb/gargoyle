@@ -1,0 +1,35 @@
+--- wireless.mk	2013-03-21 22:00:15.000000000 +0100
++++ b/package/kernel/modules/wireless.mk 2013-12-14 00:47:35.892374013 -0700
+@@ -107,3 +107,32 @@
+ $(eval $(call Download,net-prism54))
+ $(eval $(call KernelPackage,net-prism54))
+ 
++define KernelPackage/net-rtl81xxsu
++  SUBMENU:=$(WIRELESS_MENU)
++  TITLE:=RTL81XXSU support
++  DEPENDS:=@USB_SUPPORT +@DRIVER_WEXT_SUPPORT
++  KCONFIG:=CONFIG_R8712U
++  FILES:=$(LINUX_DIR)/drivers/staging/rtl8712/r8712u.ko
++  AUTOLOAD:=$(call AutoLoad,60,r8712u)
++endef
++
++define KernelPackage/net-rtl81xxsu/description
++endef
++
++RTL81XXSU_FW:=rtl8712u.bin
++
++define Download/net-rtl81xxsu
++  FILE:=$(RTL81XXSU_FW)
++  #http://git.kernel.org/cgit/linux/kernel/git/tiwai/linux-firmware.git/plain/rtlwifi/rtl8712u.bin
++  URL:=http://git.kernel.org/cgit/linux/kernel/git/tiwai/linux-firmware.git/plain/rtlwifi/
++  MD5SUM:=200fd952db3cc9259b1fd05e3e51966f
++endef
++
++define KernelPackage/net-rtl81xxsu/install
++	$(INSTALL_DIR) $(1)/lib/firmware/rtlwifi
++	$(INSTALL_DATA) $(DL_DIR)/$(RTL81XXSU_FW) $(1)/lib/firmware/rtlwifi
++endef
++
++$(eval $(call Download,net-rtl81xxsu))
++$(eval $(call KernelPackage,net-rtl81xxsu))
++
