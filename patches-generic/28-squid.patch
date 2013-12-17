@@ -1,0 +1,1494 @@
+diff --git a/package/squid/Makefile b/package/squid/Makefile
+index 04d2d7b..d9169fd 100644
+--- a/package/squid/Makefile
++++ b/package/squid/Makefile
+@@ -157,13 +157,17 @@ endef
+ define Package/squid/install
+ 	$(INSTALL_DIR) $(1)/etc/squid
+ 	$(CP) $(PKG_INSTALL_DIR)/etc/squid/mime.conf $(1)/etc/squid/
+-	$(CP) $(PKG_INSTALL_DIR)/etc/squid/squid.conf $(1)/etc/squid/
+ 	$(INSTALL_DIR) $(1)/usr/share/squid
+ 	$(CP) $(PKG_INSTALL_DIR)/usr/share/squid/* $(1)/usr/share/squid/
+ 	$(INSTALL_DIR) $(1)/usr/sbin
+ 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/squid $(1)/usr/sbin/
+ 	$(INSTALL_DIR) $(1)/usr/lib/squid
+ 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/squid/{unlinkd,pinger,logfile-daemon} $(1)/usr/lib/squid/
++	$(INSTALL_DIR) $(1)/etc/init.d
++	$(INSTALL_BIN) ./files/squid.init $(1)/etc/init.d/squid
++	$(INSTALL_DATA) ./files/squid.conf $(1)/etc/config/squid
++	$(INSTALL_DIR) $(1)/lib/functions
++	$(INSTALL_DATA) ./files/squid.sh $(1)/lib/functions	
+ endef
+ 
+ define Package/squid-mod-cachemgr/install
+diff --git a/package/squid/files/squid.config b/package/squid/files/squid.config
+new file mode 100644
+index 0000000..4ea397a
+--- /dev/null
++++ b/package/squid/files/squid.config
+@@ -0,0 +1,655 @@
++# Copyright (C) 2013 OpenWrt.org
++# Copyright (C) 2013 M. de Wit
++# This is free software, licensed under the GNU GPL General Public License v2.
++# See /LICENSE for more information.
++
++package 'squid'
++
++# OPTIONS FOR AUTHENTICATION
++# -----------------------------------------------------------------------------
++
++config authentication
++	option authenticate_cache_garbage_interval_hour 1
++	option authenticate_ttl_hour 1
++	option authenticate_ip_ttl_sec 0
++	option authenticate_ip_shortcircuit_ttl_sec 0
++
++#config auth_param
++#	option scheme negotiate
++#	option program '<uncomment and complete this line to activate>'
++#	option children 5
++#	option keep_alive '1'
++
++#config auth_param
++#	option scheme ntlm
++#	option program '<uncomment and complete this line to activate>'
++#	option children 5
++#	option keep_alive '1'
++
++#config auth_param
++#	option scheme digest
++#	option program '<uncomment and complete this line>'
++#	option children 5
++#	option realm 'Squid proxy-caching web server'
++#	option nonce_garbage_interval_min 5
++#	option nonce_max_duration_min 30
++#	option nonce_max_count 50
++
++#config auth_param
++#	option scheme basic
++#	option program '<uncomment and complete this line>'
++#	option children 5
++#	option realm 'Squid proxy-caching web server'
++#	option credentialsttl_hour 2
++#	option casesensitive '0'
++
++# ACCESS CONTROLS
++# -----------------------------------------------------------------------------
++
++config acl all
++	list src all
++
++config acl manager
++	list proto 'cache_object'
++
++config acl localhost
++	list src '127.0.0.1/32'
++
++config acl to_localhost
++	list dst '127.0.0.0/8'
++	list dst '0.0.0.0/32'
++
++config acl localnet
++	list src '10.0.0.0/8'
++	list src '172.16.0.0/12'
++	list src '192.168.0.0/16'
++
++config acl SSL_ports
++	list port 443
++
++config acl Safe_ports
++	list port 80
++	list port 21
++	list port 443
++	list port 70
++	list port 210
++	list port 1025-65535
++	list port 280
++	list port 488
++	list port 591
++	list port 777
++
++config acl CONNECT
++	list method CONNECT
++
++config acl shoutcast
++	list rep_header 'X-HTTP09-First-Line ^ICY.[0-9]'
++
++config acl apache
++	list rep_header 'Server ^Apache'
++
++config http_access
++	option allowdeny allow
++	list aclname manager
++	list aclname localhost
++
++config http_access
++	option allowdeny deny
++	list aclname manager
++
++config http_access
++	option allowdeny deny
++	list aclname !Safe_ports
++
++config http_access
++	option allowdeny deny
++	list aclname CONNECT
++	list aclname !SSL_ports
++
++config http_access
++	option allowdeny allow
++	list aclname localnet
++
++config http_access
++	option allowdeny deny
++	list aclname all
++
++#config http_access2
++#	option allowdeny deny
++#	list aclname all
++
++config http_reply_access
++	option allowdeny allow
++	list aclname all
++
++config icp_access
++	option allowdeny allow
++	list aclname localnet
++
++config icp_access
++	option allowdeny deny
++	list aclname all
++
++config htcp_access
++	option allowdeny deny
++	list aclname all
++
++config htcp_clr_access
++	option allowdeny deny
++	list aclname all
++
++config miss_access
++	option allowdeny allow
++	list aclname all
++
++config ident_lookup_access
++	option allowdeny deny
++	list aclname all
++
++config reply_body_max_size
++	option allowdeny allow
++	option size 0
++	list aclname all
++
++#config authenticate_ip_shortcircuit_access
++#	option allowdeny deny
++#	list aclname all
++
++# OPTIONS FOR X-Forwarded-For
++# -----------------------------------------------------------------------------
++
++#config x_forwarded_for
++#	option acl_uses_indirect_client '1'
++#	option delay_pool_uses_indirect_client '1'
++#	option log_uses_indirect_client '1'
++
++#config follow_x_forwarded_for
++#	option allowdeny deny
++#	list aclname all
++
++# SSL OPTIONS
++# -----------------------------------------------------------------------------
++
++config ssl
++	option ssl_unclean_shutdown off
++#	option ssl_engine engine
++#	option sslproxy_client_certificate proxy_client_certificate
++#	option sslproxy_client_key proxy_client_key
++	option sslproxy_version 1
++#	option sslproxy_options proxy_options
++#	option sslproxy_cipher proxy_cipher
++#	option sslproxy_cafile proxy_cafile
++#	option sslproxy_capath proxy_capath
++#	option sslproxy_flags proxy_flags
++#	option sslpassword_program password_program
++
++# NETWORK OPTIONS
++# -----------------------------------------------------------------------------
++
++config network
++#	list tcp_outgoing_tos '0x00 normal_service_net'
++#	list tcp_outgoing_tos '0x20 good_service_net'
++#	list tcp_outgoing_address '10.1.0.1 normal_service_net'
++#	list tcp_outgoing_address '10.1.0.2 good_service_net'
++#	list tcp_outgoing_address 10.1.0.3
++	option zph_mode '0'
++	option zph_local 0
++	option zph_sibling 0
++	option zph_parent 0
++	option zph_option 136
++
++config http_port
++	option port 3128
++
++# OPTIONS WHICH AFFECT THE NEIGHBOR SELECTION ALGORITHM
++# -----------------------------------------------------------------------------
++
++config neighbor_selection
++	option dead_peer_timeout_sec 10
++#	list cache_peer 'parent.foo.net parent 3128 3130 proxy-only default'
++#	list cache_peer 'sib1.foo.net sibling 3128 3130 proxy-only'
++#	list cache_peer 'sib2.foo.net sibling 3128 3130 proxy-only'
++#	list cache_peer_domain 'cache-host domain [domain ...]'
++#	list cache_peer_domain 'cache-host !domain'
++#	list neighbor_type_domain 'cache.foo.org sibling .com .net'
++#	list neighbor_type_domain 'cache.foo.org sibling .au .de'
++	list hierarchy_stoplist 'cgi-bin ?'
++
++#config cache_peer_access
++#	option cache_host
++#	option allowdeny allow
++#	list aclname all
++
++# MEMORY CACHE OPTIONS
++# -----------------------------------------------------------------------------
++
++config memory_cache
++	option cache_mem_mb 8
++	option maximum_object_size_in_memory_kb 8
++	option memory_replacement_policy 'lru'
++
++# DISK CACHE OPTIONS
++# -----------------------------------------------------------------------------
++
++config disk_cache
++	option cache_replacement_policy 'lru'
++	option store_dir_select_algorithm least-load
++	option max_open_disk_fds 0
++	option minimum_object_size_kb 0
++	option maximum_object_size_kb 4096
++	option cache_swap_low_pct 90
++	option cache_swap_high_pct 95
++	option update_headers '1'
++
++config cache_dir
++	option type 'ufs'
++	option directory '/var/cache'
++	option size_mb 10
++	option level1 8
++	option level2 16
++
++# LOGFILE OPTIONS
++# -----------------------------------------------------------------------------
++
++config log
++	option logfile_daemon /usr/lib/squid/logfile-daemon
++	option cache_log /var/logs/cache.log
++	option cache_store_log /var/logs/store.log
++#	option cache_swap_state ...
++	option logfile_rotate 10
++	option emulate_httpd_log '0'
++	option log_ip_on_direct '1'
++	option mime_table /etc/squid/mime.conf
++	option log_mime_hdrs '0'
++#	option useragent_log /var/logs/useragent.log
++#	option referer_log /var/logs/referer.log
++	option pid_filename /var/logs/squid.pid
++	option debug_options ALL,1
++	option log_fqdn '0'
++	option client_netmask 255.255.255.255
++#	option forward_log /var/logs/forward.log
++	option strip_query_terms '1'
++	option buffered_logs '0'
++	option netdb_filename /var/logs/netdb.state
++
++#config logformat squid
++#	option format '%ts.%03tu %6tr %>a %Ss/%03Hs %<st %rm %ru %un %Sh/%<A %mt'
++
++#config logformat squidmime
++#	option format '%ts.%03tu %6tr %>a %Ss/%03Hs %<st %rm %ru %un %Sh/%<A %mt [%>h] [%<h]'
++
++#config logformat common
++#	option format '%>a %ui %un [%tl] "%rm %ru HTTP/%rv" %Hs %<st %Ss:%Sh'
++
++#config logformat combined
++#	option format '%>a %ui %un [%tl] "%rm %ru HTTP/%rv" %Hs %<st "%{Referer}>h" "%{User-Agent}>h" %Ss:%Sh'
++
++config access_log
++	option filepath '/var/logs/access.log'
++	option logformat 'squid'
++
++#config log_access
++#	option allowdeny allow
++#	list aclname all
++
++# OPTIONS FOR FTP GATEWAYING
++# -----------------------------------------------------------------------------
++
++config ftp_gatewaying
++	option ftp_user Squid@
++	option ftp_list_width 32
++	option ftp_passive '1'
++	option ftp_sanitycheck '1'
++	option ftp_telnet_protocol '1'
++
++# OPTIONS FOR EXTERNAL SUPPORT PROGRAMS
++# -----------------------------------------------------------------------------
++
++config external_support_programs
++	option diskd_program /usr/lib/squid/diskd-daemon
++	option unlinkd_program /usr/lib/squid/unlinkd
++	option pinger_program /usr/lib/squid/pinger
++
++# OPTIONS FOR URL REWRITING
++# -----------------------------------------------------------------------------
++
++config url_rewriting
++#	option storeurl_rewrite_program 'storeurl_rewrite'
++	option storeurl_rewrite_children 5
++	option storeurl_rewrite_concurrency 0
++#	option url_rewrite_program 'url_rewrite'
++	option url_rewrite_children 5
++	option url_rewrite_concurrency 0
++	option url_rewrite_host_header '1'
++	option redirector_bypass '0'
++#	option location_rewrite_program 'location_rewrite'
++	option location_rewrite_children 5
++	option location_rewrite_concurrency 0
++
++#config url_rewrite_access
++#	option allowdeny allow
++#	list aclname all
++
++#config storeurl_access
++#	option allowdeny allow
++#	list aclname all
++
++#config location_rewrite_access
++#	option allowdeny allow
++#	list aclname all
++
++# OPTIONS FOR TUNING THE CACHE
++# -----------------------------------------------------------------------------
++
++config cache_tuning
++	option max_stale_week 1
++	option quick_abort_min_kb 16
++	option quick_abort_max_kb 16
++	option quick_abort_pct 95
++	option read_ahead_gap_kb 16
++	option negative_ttl_min 5
++	option positive_dns_ttl_hour 6
++	option negative_dns_ttl_min 1
++	option range_offset_limit_kb 0
++	option minimum_expiry_time_sec 60
++	option store_avg_object_size_kb 13
++	option store_objects_per_bucket 20
++
++#config cache
++#	option allowdeny allow
++#	list aclname all
++
++config refresh_pattern
++	option regex '^ftp:'
++	option min 1440
++	option percentage 20
++	option max 10080
++
++config refresh_pattern
++	option regex '^gopher:'
++	option min 1440
++	option percentage 0
++	option max 1440
++
++config refresh_pattern
++	option regex '-i (/cgi-bin/|\?)'
++	option min 0
++	option percentage 0
++	option max 0
++
++config refresh_pattern
++	option regex '.'
++	option min 0
++	option percentage 20
++	option max 4320
++
++# HTTP OPTIONS
++# -----------------------------------------------------------------------------
++
++config http
++	option request_header_max_size_kb 20
++	option reply_header_max_size_kb 20
++	option request_body_max_size_kb 0
++	option via '1'
++	option cache_vary '1'
++	option collapsed_forwarding '0'
++	option refresh_stale_hit_sec 0
++	option ie_refresh '0'
++	option vary_ignore_expire '0'
++#	list extension_methods X-POST
++	option request_entities '0'
++#	list header_replace 'User-Agent Nutscrape/1.0 (CP/M; 8-bit)'
++	option relaxed_header_parser '1'
++	option server_http11 '0'
++	option ignore_expect_100 '0'
++#	list external_refresh_check 'external_refresh_check'
++
++#config broken_posts
++#	option allowdeny allow
++#	list aclname buggy_server
++
++config upgrade_http0.9
++	option allowdeny deny
++	list aclname shoutcast
++
++config broken_vary_encoding
++	option allowdeny allow
++	list aclname apache
++
++#config header_access
++#	option allowdeny deny
++#	option header_name From
++#	list aclname all
++
++# TIMEOUTS
++# -----------------------------------------------------------------------------
++
++config timeouts
++	option forward_timeout_min 4
++	option connect_timeout_min 1
++	option peer_connect_timeout_sec 30
++	option read_timeout_min 15
++	option request_timeout_min 5
++	option persistent_request_timeout_min 2
++	option client_lifetime_day 1
++	option half_closed_clients '1'
++	option pconn_timeout_min 1
++	option ident_timeout_sec 10
++	option shutdown_lifetime_sec 30
++
++# ADMINISTRATIVE PARAMETERS
++# -----------------------------------------------------------------------------
++
++config administrative
++	option cache_mgr webmaster
++#	option mail_from 'nobody'
++	option mail_program mail
++	option cache_effective_user nobody
++#	option cache_effective_group nobody
++	option httpd_suppress_version_string '0'
++#	option visible_hostname visible
++#	option unique_hostname unique
++#	list hostname_aliases alias
++	option umask 027
++
++# OPTIONS FOR THE CACHE REGISTRATION SERVICE
++# -----------------------------------------------------------------------------
++
++config cache_registration
++	option announce_period 0
++	option announce_host tracker.ircache.net
++	option announce_port 3131
++#	option announce_file 'some file'
++
++# HTTPD-ACCELERATOR OPTIONS
++# -----------------------------------------------------------------------------
++
++config httpd_accelerator
++	option httpd_accel_no_pmtu_disc '0'
++
++# DELAY POOL PARAMETERS
++# -----------------------------------------------------------------------------
++
++config delay_pool
++	option delay_pools 0
++#	list delay_class '1 2'
++#	list delay_parameters '1 -1/-1 8000/8000'
++	option delay_initial_bucket_level 50
++
++#config delay_access
++#	option allowdeny allow
++#	option pool 1
++#	list aclname all
++
++# WCCPv1 AND WCCPv2 CONFIGURATION OPTIONS
++# -----------------------------------------------------------------------------
++
++config wccp
++	option wccp_router 0.0.0.0
++	option wccp_router2 0.0.0.0
++	option wccp_version 4
++	option wccp2_rebuild_wait '1'
++	option wccp2_forwarding_method 1
++	option wccp2_return_method 1
++	option wccp2_assignment_method 1
++	option wccp2_service 'standard 0'
++	option wccp2_weight 10000
++	option wccp_address 0.0.0.0
++	option wccp2_address 0.0.0.0
++#	list wccp2_service_info '80 protocol=tcp flags=src_ip_hash,ports_source priority=240 ports=80'
++
++
++# PERSISTENT CONNECTION HANDLING
++# -----------------------------------------------------------------------------
++
++config persistent_connection
++	option client_persistent_connections '1'
++	option server_persistent_connections '1'
++	option persistent_connection_after_error '0'
++	option detect_broken_pconn '0'
++
++# CACHE DIGEST OPTIONS
++# -----------------------------------------------------------------------------
++
++config cache_digest
++	option digest_generation '1'
++	option digest_bits_per_entry 5
++	option digest_rebuild_period_hour 1
++	option digest_rewrite_period_hour 1
++	option digest_swapout_chunk_size_bytes 4096
++	option digest_rebuild_chunk_pct 10
++
++# SNMP OPTIONS
++# -----------------------------------------------------------------------------
++
++#config snmp
++#	option snmp_port 3401
++#	option snmp_incoming_address 0.0.0.0
++#	option snmp_outgoing_address 255.255.255.255
++
++#config snmp_access
++#	option allowdeny deny
++#	list aclname all
++
++# ICP OPTIONS
++# -----------------------------------------------------------------------------
++
++config icp
++	option icp_port 3130
++	option htcp_port 4827
++	option log_icp_queries '1'
++	option udp_incoming_address 0.0.0.0
++	option udp_outgoing_address 255.255.255.255
++	option icp_hit_stale '0'
++	option minimum_direct_hops 4
++	option minimum_direct_rtt 400
++	option netdb_low 900
++	option netdb_high 1000
++	option netdb_ping_period_min 5
++	option query_icmp '0'
++	option test_reachability '0'
++	option icp_query_timeout_msec 0
++	option maximum_icp_query_timeout_msec 2000
++	option minimum_icp_query_timeout_msec 5
++
++# MULTICAST ICP OPTIONS
++# -----------------------------------------------------------------------------
++
++#config multicast_icp
++#	option mcast_miss_addr 255.255.255.255
++#	option mcast_miss_ttl 16
++#	option mcast_miss_port 3135
++#	option mcast_miss_encode_key XXXXXXXXXXXXXXXX
++#	option mcast_icp_query_timeout 2000
++#	list mcast_groups 239.128.16.128
++#	list mcast_groups 224.0.1.20
++
++# INTERNAL ICON OPTIONS
++# -----------------------------------------------------------------------------
++
++config internal_icon
++	option icon_directory '/usr/share/squid/icons'
++	option global_internal_static '1'
++	option short_icon_urls '0'
++
++# ERROR PAGE OPTIONS
++# -----------------------------------------------------------------------------
++
++config error_page
++	option error_directory '/usr/share/squid/errors/English'
++#	option err_html_text 'sometext'
++#	list error_map 'http://your.server/error/404.shtml 404'
++#	list deny_info 'mailto:'
++
++# OPTIONS INFLUENCING REQUEST FORWARDING
++# -----------------------------------------------------------------------------
++
++config request_forwarding
++	option nonhierarchical_direct '1'
++	option prefer_direct '0'
++	option ignore_ims_on_miss '0'
++
++#config always_direct
++#	option allowdeny allow
++#	option aclname all
++
++#config never_direct
++#	option allowdeny allow
++#	option aclname all
++
++# ADVANCED NETWORKING OPTIONS
++# -----------------------------------------------------------------------------
++
++config advanced_networking
++	option max_filedescriptors 0
++#	option accept_filter data
++	option tcp_recv_bufsize_bytes 0
++	option incoming_rate 30
++
++# DNS OPTIONS
++# -----------------------------------------------------------------------------
++
++config dns
++	option check_hostnames '1'
++	option allow_underscore '1'
++#	option cache_dns_program /usr/lib/squid/dnsserver
++#	option dns_children 5
++	option dns_retransmit_interval_sec 5
++	option dns_timeout_min 2
++	option dns_defnames '0'
++	option hosts_file /etc/hosts
++#	option append_domain '.example.com'
++	option ignore_unknown_nameservers '1'
++	option ipcache_size 1024
++#	option ipcache_low_pct 90
++#	option ipcache_high_pct 95
++	option fqdncache_size 1024
++#	list dns_nameservers w.x.y.z
++	list dns_testnames 'netscape.com internic.net nlanr.net microsoft.com'
++
++# MISCELLANEOUS
++# -----------------------------------------------------------------------------
++
++config miscellaneous
++	option memory_pools 1
++	option memory_pools_limit_mb 5
++	option forwarded_for '1'
++#	option cachemgr_passwd 'abcdef'
++	option client_db '1'
++	option reload_into_ims '0'
++	option maximum_single_addr_tries 1
++	option retry_on_error '0'
++	option as_whois_server whois.ra.net
++	option offline_mode '0'
++	option uri_whitespace strip
++	option coredump_dir '/var/cache'
++#	option chroot squid
++	option balance_on_multiple_ip '1'
++	option pipeline_prefetch '0'
++	option high_response_time_warning '0'
++	option high_page_fault_warning '0'
++	option high_memory_warning_kb '0'
++	option sleep_after_fork_msec '0'
++	option zero_buffers '1'
++	option windows_ipaddrchangemonitor '1'
++
+diff --git a/package/squid/files/squid.functions b/package/squid/files/squid.functions
+new file mode 100644
+index 0000000..fd9b880
+--- /dev/null
++++ b/package/squid/files/squid.functions
+@@ -0,0 +1,776 @@
++#!/bin/sh /etc/rc.common
++# Copyright (C) 2013 OpenWrt.org
++# Copyright (C) 2013 M. de Wit
++# This is free software, licensed under the GNU GPL General Public License v2.
++# See /LICENSE for more information.
++
++handle_option() {
++	local config="$1"
++	local uciopt="$2"
++	local option="$3"
++	local quant="$4"
++	config_get rval $config $uciopt
++	if [ ! -z "$rval" ]; then
++		echo "$option $rval $quant"
++	fi
++}
++
++handle_boolean() {
++	local config="$1"
++	local uciopt="$2"
++	local option="$3"
++	config_get_bool rval $config $uciopt
++	if [ ! -z "$rval" ]; then
++		if [ "$rval" -eq 1 ]; then
++			echo "$option on"
++		else
++			echo "$option off"
++		fi
++	fi
++}
++
++handle_list() {
++	local config="$1"
++	local uciopt="$2"
++	local option="$3"
++
++	listvalue() {
++		local value="$1"
++		local option="$2"
++		echo "$option $value"
++	}
++
++	config_list_foreach $config $uciopt listvalue $option
++}
++
++section_refresh_pattern() {
++	local config="$1"
++
++	config_get regex "$config" regex
++	config_get min "$config" min
++	config_get percentage "$config" percentage
++	config_get max "$config" max
++	
++	echo "refresh_pattern $regex $min $percentage% $max"
++}
++
++section_acl() {
++	local config="$1"
++	local acltypes="src dst myip arp srcdomain dstdomain srcdom_regex dstdom_regex time url_regex urlpath_regex urllogin port myport myportname proto method browser referer_regex ident ident_regex src_as dst_as proxy_auth proxy_auth_regex snmp_community maxconn max_user_ip reg_mime_type req_header req_mime rep_header external urlgroup user_cert ca_cert ext_user ext_user_regex"
++
++	handle_acl() {
++		local aclname="$2"
++		local acltype="$3"
++		local arguments="$1"
++		echo "acl $aclname $acltype $arguments"
++	}
++
++	for acltype in $acltypes; do
++		config_list_foreach "$config" $acltype handle_acl "$config" $acltype
++	done
++}
++
++section_access() {
++	local config="$1"
++	local access_type="$2"
++	local add_param="$3"
++    local param=""
++
++	config_get allowdeny "$config" allowdeny
++	config_get aclname "$config" aclname
++	if [ ! -z "$add_param" ]; then
++		config_get param "$config" "$add_param"
++	fi
++
++	echo "$access_type $param $allowdeny $aclname"
++}
++
++section_http_port() {
++	local config="$1"
++
++	config_get      hostname           "$config" hostname
++	config_get      port               "$config" port
++	config_get_bool transparant        "$config" transparant
++	config_get_bool tproxy             "$config" tproxy
++	config_get_bool accel              "$config" accel
++	config_get      defaultsite        "$config" defaultsite
++	config_get_bool vhost              "$config" vhost
++	config_get      vport              "$config" vport
++	config_get_bool allow_direct       "$config" allow-direct
++	config_get      urlgroup           "$config" urlgroup
++	config_get      protocol           "$config" protocol
++	config_get_bool no_connection_auth "$config" no_connection_auth
++	config_get_bool act_as_origin      "$config" act-as-origin
++	config_get_bool http11             "$config" http11
++	config_get      name               "$config" name
++	config_get      tcpkeepalive       "$config" tcpkeepalive
++
++	echo "http_port $port $transparant $tproxy $accel $defaultsite $vhost $vport $allow_direct $urlgroup $protocol $no_connection_auth $act_as_origin $http11 $name $tcpkeepalive"
++}
++
++section_https_port() {
++	local config="$1"
++	# Note: Did not bother with all the suboptions...
++	config_get      port               "$config" port
++	echo "https_port $port"
++}
++
++section_cache_dir() {
++	local config="$1"
++	config_get type      "$config" type
++	config_get directory "$config" directory
++	config_get size_mb   "$config" size_mb
++	config_get level1    "$config" level1
++	config_get level2    "$config" level2
++	echo "cache_dir $type $directory $size_mb $level1 $level2"
++}
++
++section_logformat() {
++	local config="$1"
++	config_get format "$config" format
++	echo "logformat $config $format"
++}
++
++section_access_log() {
++	local config="$1"
++	config_get filepath  "$config" filepath
++	config_get logformat "$config" logformat
++	config_get aclname   "$config" aclname
++	echo "access_log $filepath $logformat $aclname"
++}
++
++section_auth_param() {
++	local config="$1"
++	config_get scheme "$config" scheme
++	if [ ! -z "$scheme" ]; then
++		config_get program  "$config" program
++		config_get children  "$config" children
++		config_get realm  "$config" realm
++		config_get_bool keep_alive  "$config" keep_alive
++		config_get nonce_garbage_interval  "$config" nonce_garbage_interval_min
++		config_get nonce_max_duration  "$config" nonce_max_duration_min
++		config_get nonce_max_count  "$config" nonce_max_count
++		config_get credentialsttl  "$config" credentialsttl_hour
++		config_get_bool casesensitive  "$config" casesensitive
++		onoff() {
++			if [ "$1" -eq 1 ]; then echo "on"; else echo "off"; fi
++		}
++		if [ ! -z "$program" ]; then
++			echo "auth_param $scheme program $program"
++		fi
++		if [ ! -z "$children" ]; then
++			echo "auth_param $scheme children $children"
++		fi
++		if [ ! -z "$realm" ]; then
++			echo "auth_param $scheme realm $realm"
++		fi
++		if [ ! -z "$keep_alive" ]; then
++			echo "auth_param $scheme keep_alive `onoff $keep_alive`"
++		fi
++		if [ ! -z "$nonce_garbage_interval" ]; then
++			echo "auth_param $scheme nonce_garbage_interval $nonce_garbage_interval minutes"
++		fi
++		if [ ! -z "$nonce_max_duration" ]; then
++			echo "auth_param $scheme nonce_max_duration $nonce_max_duration minutes"
++		fi
++		if [ ! -z "$nonce_max_count" ]; then
++			echo "auth_param $scheme nonce_max_count $nonce_max_count"
++		fi
++		if [ ! -z "$credentialsttl" ]; then
++			echo "auth_param $scheme credentialsttl $credentialsttl hours"
++		fi
++		if [ ! -z "$casesensitive" ]; then
++			echo "auth_param $scheme casesensitive `onoff $casesensitive`"
++		fi
++	fi
++}
++
++section_authentication() {
++    local config="$1"
++	handle_option $config authenticate_cache_garbage_interval_hour authenticate_cache_garbage_interval "hours"
++	handle_option $config authenticate_ttl_hour authenticate_ttl "hours"
++	handle_option $config authenticate_ip_ttl_sec authenticate_ip_ttl "seconds"
++	handle_option $config authenticate_ip_shortcircuit_ttl_sec authenticate_ip_shortcircuit_ttl "seconds"
++}
++
++config_authentication_options() {
++	echo "# OPTIONS FOR AUTHENTICATION"
++	config_foreach section_auth_param     "auth_param"
++	config_foreach section_authentication "authentication"
++}
++
++section_access_controls() {
++    local config="$1"
++	handle_list $config external_acl_type external_acl_type
++}
++
++config_access_controls() {
++	echo "# ACCESS CONTROLS"
++	config_foreach section_access_controls "access_controls"
++	config_foreach section_acl acl
++	config_foreach section_access http_access http_access
++	config_foreach section_access http_access2 http_access2
++	config_foreach section_access http_reply_access http_reply_access
++	config_foreach section_access icp_access icp_access
++	config_foreach section_access htcp_access htcp_access
++	config_foreach section_access htcp_clr_access htcp_clr_access
++	config_foreach section_access miss_access miss_access
++	config_foreach section_access ident_lookup_access ident_lookup_access
++	config_foreach section_access reply_body_max_size reply_body_max_size size
++	config_foreach section_access authenticate_ip_shortcircuit_access authenticate_ip_shortcircuit_access
++}
++
++section_x_forwarded_for() {
++    local config="$1"
++	handle_boolean $config acl_uses_indirect_client acl_uses_indirect_client
++	handle_boolean $config delay_pool_uses_indirect_client delay_pool_uses_indirect_client
++	handle_boolean $config log_uses_indirect_client log_uses_indirect_client
++}
++
++config_x_forwarded_for_options() {
++	echo "# OPTIONS FOR X-Forwarded-For"
++	config_foreach section_x_forwarded_for "x_forwarded_for"
++	config_foreach section_access follow_x_forwarded_for follow_x_forwarded_for
++}
++
++section_ssl() {
++    local config="$1"
++	handle_boolean $config ssl_unclean_shutdown ssl_unclean_shutdown
++	handle_option  $config ssl_engine ssl_engine
++	handle_option  $config sslproxy_client_certificate sslproxy_client_certificate
++	handle_option  $config sslproxy_client_key sslproxy_client_key
++	handle_option  $config sslproxy_version sslproxy_version
++	handle_option  $config sslproxy_options sslproxy_options
++	handle_option  $config sslproxy_cipher sslproxy_cipher
++	handle_option  $config sslproxy_cafile sslproxy_cafile
++	handle_option  $config sslproxy_capath sslproxy_capath
++	handle_option  $config sslproxy_flags sslproxy_flags
++	handle_option  $config sslpassword_program sslpassword_program
++}
++
++config_ssl_options() {
++	echo "# SSL OPTIONS"
++	config_foreach section_ssl "ssl"
++}
++
++section_network() {
++	local config="$1"
++	# Note: The following list-items could be detailed more in seperate sections...
++	handle_list    $config tcp_outgoing_tos tcp_outgoing_tos
++	handle_list    $config tcp_outgoing_address tcp_outgoing_address
++	handle_boolean $config zph_mode zph_mode
++	handle_option  $config zph_local zph_local
++	handle_option  $config zph_sibling zph_sibling
++	handle_option  $config zph_parent zph_parent
++	handle_option  $config zph_option zph_option
++}
++
++config_network_options() {
++	echo "# NETWORK OPTIONS"
++	config_foreach section_network "network"
++	config_foreach section_http_port http_port
++	config_foreach section_https_port https_port
++}
++
++section_neighbor_selection() {
++	local config="$1"
++	# Note: The following list-items could be detailed more in seperate sections...
++	handle_list   $config cache_peer cache_peer
++	handle_list   $config cache_peer_domain cache_peer_domain
++	handle_list   $config neighbor_type_domain neighbor_type_domain
++	handle_option $config dead_peer_timeout_sec dead_peer_timeout "seconds"
++	handle_list   $config hierarchy_stoplist hierarchy_stoplist
++}
++
++config_neighbor_selection_algorithm() {
++	echo "# OPTIONS WHICH AFFECT THE NEIGHBOR SELECTION ALGORITHM"
++	config_foreach section_neighbor_selection "neighbor_selection"
++	config_foreach section_access cache_peer_access cache_peer_access
++}
++
++section_memory_cache() {
++	local config="$1"
++	handle_option $config cache_mem_mb cache_mem "MB"
++	handle_option $config maximum_object_size_in_memory_kb maximum_object_size_in_memory "KB"
++	handle_option $config memory_replacement_policy memory_replacement_policy
++}
++
++config_memory_cache_options() {
++	echo "# MEMORY CACHE OPTIONS"
++	config_foreach section_memory_cache "memory_cache"
++}
++
++section_disk_cache() {
++	local config="$1"
++	handle_option  $config cache_replacement_policy cache_replacement_policy
++	handle_option  $config store_dir_select_algorithm store_dir_select_algorithm
++	handle_option  $config max_open_disk_fds max_open_disk_fds
++	handle_option  $config minimum_object_size_kb minimum_object_size "KB"
++	handle_option  $config maximum_object_size_kb maximum_object_size "KB"
++	handle_option  $config cache_swap_low_pct cache_swap_low
++	handle_option  $config cache_swap_high_pct cache_swap_high
++	handle_boolean $config update_headers update_headers
++}
++
++config_disk_cache_options() {
++	echo "# DISK CACHE OPTIONS"
++	config_foreach section_disk_cache "disk_cache"
++	config_foreach section_cache_dir cache_dir
++}
++
++section_log() {
++	local config="$1"
++	handle_option  $config logfile_daemon logfile_daemon
++	handle_option  $config cache_log cache_log
++	handle_option  $config cache_store_log cache_store_log
++	handle_option  $config cache_swap_state cache_swap_state
++	handle_option  $config logfile_rotate logfile_rotate
++	handle_boolean $config emulate_httpd_log emulate_httpd_log
++	handle_boolean $config log_ip_on_direct log_ip_on_direct
++	handle_option  $config mime_table mime_table
++	handle_boolean $config log_mime_hdrs log_mime_hdrs
++	handle_option  $config useragent_log useragent_log
++	handle_option  $config referer_log referer_log
++	handle_option  $config pid_filename pid_filename
++	handle_option  $config debug_options debug_options
++	handle_boolean $config log_fqdn log_fqdn
++	handle_option  $config client_netmask client_netmask
++	handle_option  $config forward_log forward_log
++	handle_boolean $config strip_query_terms strip_query_terms
++	handle_boolean $config buffered_logs buffered_logs
++	handle_option  $config netdb_filename netdb_filename
++}
++
++config_logfile_options() {
++	echo "# LOGFILE OPTIONS"
++	config_foreach section_log "log"
++	config_foreach section_logformat logformat
++	config_foreach section_access_log access_log
++	config_foreach section_access log_access log_access
++}
++
++section_ftp_gatewaying() {
++	local config="$1"
++	handle_option  $config ftp_user ftp_user
++	handle_option  $config ftp_list_width ftp_list_width
++	handle_boolean $config ftp_passive ftp_passive
++	handle_boolean $config ftp_sanitycheck ftp_sanitycheck
++	handle_boolean $config ftp_telnet_protocol ftp_telnet_protocol
++}
++
++config_ftp_gatewaying_options()  {
++	echo "# OPTIONS FOR FTP GATEWAYING"
++	config_foreach section_ftp_gatewaying "ftp_gatewaying"
++}
++
++section_external_support_programs() {
++	local config="$1"
++	handle_option  $config diskd_program diskd_program
++	handle_option  $config unlinkd_program unlinkd_program
++	handle_option  $config pinger_program pinger_program
++}
++
++config_external_support_programs_options() {
++	echo "# OPTIONS FOR EXTERNAL SUPPORT PROGRAMS"
++	config_foreach section_external_support_programs "external_support_programs"
++}
++
++section_url_rewriting() {
++	local config="$1"
++	handle_option  $config storeurl_rewrite_program storeurl_rewrite_program
++	handle_option  $config storeurl_rewrite_children storeurl_rewrite_children
++	handle_option  $config storeurl_rewrite_concurrency storeurl_rewrite_concurrency
++	handle_option  $config url_rewrite_program url_rewrite_program
++	handle_option  $config url_rewrite_children url_rewrite_children
++	handle_option  $config url_rewrite_concurrency url_rewrite_concurrency
++	handle_boolean $config url_rewrite_host_header url_rewrite_host_header
++	handle_boolean $config redirector_bypass redirector_bypass
++	handle_option  $config location_rewrite_program location_rewrite_program
++	handle_option  $config location_rewrite_children location_rewrite_children
++	handle_option  $config location_rewrite_concurrency location_rewrite_concurrency
++}
++
++config_url_rewriting_options() {
++	echo "# OPTIONS FOR URL REWRITING"
++	config_foreach section_url_rewriting "url_rewriting"
++	config_foreach section_access url_rewrite_access url_rewrite_access
++	config_foreach section_access storeurl_access storeurl_access
++	config_foreach section_access location_rewrite_access location_rewrite_access
++}
++
++section_cache_tuning() {
++	local config="$1"
++	handle_option  $config max_stale_week max_stale "weeks"
++	handle_option  $config quick_abort_min_kb quick_abort_min "KB"
++	handle_option  $config quick_abort_max_kb quick_abort_max "KB"
++	handle_option  $config quick_abort_pct quick_abort_pct
++	handle_option  $config read_ahead_gap_kb read_ahead_gap "KB"
++	handle_option  $config negative_ttl_min negative_ttl "minutes"
++	handle_option  $config positive_dns_ttl_hour positive_dns_ttl "hours"
++	handle_option  $config negative_dns_ttl_min negative_dns_ttl "minutes"
++	handle_option  $config range_offset_limit_kb range_offset_limit "KB"
++	handle_option  $config minimum_expiry_time_sec minimum_expiry_time "seconds"
++	handle_option  $config store_avg_object_size_kb store_avg_object_size "KB"
++	handle_option  $config store_objects_per_bucket store_objects_per_bucket
++}
++
++config_cache_tuning_options() {
++	echo "# OPTIONS FOR TUNING THE CACHE"
++	config_foreach section_cache_tuning "cache_tuning"
++	config_foreach section_access cache cache
++	config_foreach section_refresh_pattern refresh_pattern
++}
++
++section_http() {
++	local config="$1"
++	handle_option  $config request_header_max_size_kb request_header_max_size "KB"
++	handle_option  $config reply_header_max_size_kb reply_header_max_size "KB"
++	handle_option  $config request_body_max_size_kb request_body_max_size "KB"
++	handle_boolean $config via via
++	handle_boolean $config cache_vary cache_vary
++	handle_boolean $config collapsed_forwarding collapsed_forwarding
++	handle_option  $config refresh_stale_hit_sec refresh_stale_hit "seconds"
++	handle_boolean $config ie_refresh ie_refresh
++	handle_boolean $config vary_ignore_expire vary_ignore_expire
++	handle_list    $config extension_methods extension_methods
++	handle_boolean $config request_entities request_entities
++	handle_list    $config header_replace header_replace
++	handle_boolean $config relaxed_header_parser relaxed_header_parser
++	handle_boolean $config server_http11 server_http11
++	handle_boolean $config ignore_expect_100 ignore_expect_100
++	handle_list    $config external_refresh_check external_refresh_check 
++}
++
++config_http_options() {
++	echo "# HTTP OPTIONS"
++	config_foreach section_http "http"
++	config_foreach section_access broken_posts broken_posts
++	config_foreach section_access upgrade_http0.9 upgrade_http0.9
++	config_foreach section_access broken_vary_encoding broken_vary_encoding
++	config_foreach section_access header_access header_access "header_name"
++}
++
++section_timeouts() {
++	local config="$1"
++	handle_option  $config forward_timeout_min forward_timeout "minutes"
++	handle_option  $config connect_timeout_min connect_timeout "minutes"
++	handle_option  $config peer_connect_timeout_sec peer_connect_timeout "seconds"
++	handle_option  $config read_timeout_min read_timeout "minutes"
++	handle_option  $config request_timeout_min request_timeout "minutes"
++	handle_option  $config persistent_request_timeout_min persistent_request_timeout "minutes"
++	handle_option  $config client_lifetime_day client_lifetime "days"
++	handle_boolean $config half_closed_clients half_closed_clients
++	handle_option  $config pconn_timeout_min pconn_timeout "minutes"
++	handle_option  $config ident_timeout_sec ident_timeout "seconds"
++	handle_option  $config shutdown_lifetime_sec shutdown_lifetime "seconds"
++}
++
++config_timeouts() {
++	echo "# TIMEOUTS"
++	config_foreach section_timeouts "timeouts"
++}
++
++section_administrative() {
++	local config="$1"
++	handle_option  $config cache_mgr cache_mgr
++	handle_option  $config mail_from mail_from
++	handle_option  $config mail_program mail_program
++	handle_option  $config cache_effective_user cache_effective_user
++	handle_option  $config cache_effective_group cache_effective_group
++	handle_boolean $config httpd_suppress_version_string httpd_suppress_version_string
++	handle_option  $config visible_hostname visible_hostname
++	handle_option  $config unique_hostname unique_hostname
++	handle_list    $config hostname_aliases hostname_aliases
++	handle_option  $config umask umask
++}
++
++config_administrative_parameters() {
++	echo "# ADMINISTRATIVE PARAMETERS"
++	config_foreach section_administrative "administrative"
++}
++
++section_cache_registration() {
++	local config="$1"
++	handle_option $config announce_period announce_period
++	handle_option $config announce_host announce_host
++	handle_option $config announce_file announce_file
++	handle_option $config announce_port announce_port
++}
++
++config_cache_registration_service() {
++	echo "# OPTIONS FOR THE CACHE REGISTRATION SERVICE"
++	config_foreach section_cache_registration "cache_registration"
++}
++
++section_httpd_accelerator() {
++	local config="$1"
++	handle_boolean $config httpd_accel_no_pmtu_disc httpd_accel_no_pmtu_disc
++}
++
++config_httpd_accelerator_options() {
++	echo "# HTTPD-ACCELERATOR OPTIONS"
++	config_foreach section_httpd_accelerator "httpd_accelerator"
++}
++
++section_delay_pool() {
++	local config="$1"
++	handle_option $config delay_pools delay_pools
++	handle_list   $config delay_class delay_class
++	handle_list   $config delay_parameters delay_parameters
++	handle_option $config delay_initial_bucket_level delay_initial_bucket_level
++}
++
++config_delay_pool_parameters() {
++	echo "# DELAY POOL PARAMETERS"
++	config_foreach section_delay_pool "delay_pool"
++	config_foreach section_access delay_access delay_access "pool"
++}
++
++section_wccp() {
++	local config="$1"
++	handle_option  $config wccp_router wccp_router
++	handle_option  $config wccp2_router wccp2_router
++	handle_option  $config wccp_version wccp_version
++	handle_boolean $config wccp2_rebuild_wait wccp2_rebuild_wait
++	handle_option  $config wccp2_forwarding_method wccp2_forwarding_method
++	handle_option  $config wccp2_return_method wccp2_return_method
++	handle_option  $config wccp2_assignment_method wccp2_assignment_method
++	handle_option  $config wccp2_service wccp2_service
++	handle_list    $config wccp2_service_info wccp2_service_info
++	handle_option  $config wccp2_weight wccp2_weight
++	handle_option  $config wccp_address wccp_address
++	handle_option  $config wccp2_address wccp2_address
++}
++
++config_wccp_options() {
++	echo "# WCCPv1 AND WCCPv2 CONFIGURATION OPTIONS"
++	config_foreach section_wccp "wccp"
++}
++
++section_persistent_connection() {
++	local config="$1"
++	handle_boolean $config client_persistent_connections client_persistent_connections
++	handle_boolean $config server_persistent_connections server_persistent_connections
++	handle_boolean $config persistent_connection_after_error persistent_connection_after_error
++	handle_boolean $config detect_broken_pconn detect_broken_pconn
++}
++
++config_persistent_connection_handling() {
++	echo "# PERSISTENT CONNECTION HANDLING"
++	config_foreach section_persistent_connection "persistent_connection"
++}
++
++section_cache_digest() {
++	local config="$1"
++	handle_boolean $config digest_generation digest_generation
++	handle_option  $config digest_bits_per_entry digest_bits_per_entry
++	handle_option  $config digest_rebuild_period_hour digest_rebuild_period "hour"
++	handle_option  $config digest_rewrite_period_hour digest_rewrite_period "hour"
++	handle_option  $config digest_swapout_chunk_size_bytes digest_swapout_chunk_size "bytes"
++	handle_option  $config digest_rebuild_chunk_pct digest_rebuild_chunk_percentage
++}
++
++config_cache_digest_options() {
++	echo "# CACHE DIGEST OPTIONS"
++	config_foreach section_cache_digest "cache_digest"
++}
++
++section_snmp() {
++	local config="$1"
++	handle_option $config snmp_port snmp_port
++	handle_option $config snmp_incoming_address snmp_incoming_address
++	handle_option $config snmp_outgoing_address snmp_outgoing_address
++}
++
++config_snmp_options() {
++	echo "# SNMP OPTIONS"
++	config_foreach section_snmp "snmp"
++	config_foreach section_access snmp_access snmp_access
++}
++
++section_icp() {
++	local config="$1"
++	handle_option  $config icp_port icp_port
++	handle_option  $config htcp_port htcp_port
++	handle_boolean $config log_icp_queries log_icp_queries
++	handle_option  $config udp_incoming_address udp_incoming_address
++	handle_option  $config udp_outgoing_address udp_outgoing_address
++	handle_boolean $config icp_hit_stale icp_hit_stale
++	handle_option  $config minimum_direct_hops minimum_direct_hops
++	handle_option  $config minimum_direct_rtt minimum_direct_rtt
++	handle_option  $config netdb_low netdb_low
++	handle_option  $config netdb_high netdb_high
++	handle_option  $config netdb_ping_period_min netdb_ping_period "minutes"
++	handle_boolean $config query_icmp query_icmp
++	handle_boolean $config test_reachability test_reachability
++	handle_option  $config icp_query_timeout_msec icp_query_timeout
++	handle_option  $config maximum_icp_query_timeout_msec maximum_icp_query_timeout
++	handle_option  $config minimum_icp_query_timeout_msec minimum_icp_query_timeout
++
++}
++
++config_icp_options() {
++	echo "# ICP OPTIONS"
++	config_foreach section_icp "icp"
++}
++
++section_multicast_icp() {
++	local config="$1"
++	handle_list   $config mcast_groups mcast_groups
++	handle_option $config mcast_miss_addr mcast_miss_addr
++	handle_option $config mcast_miss_ttl mcast_miss_ttl
++	handle_option $config mcast_miss_port mcast_miss_port
++	handle_option $config mcast_miss_encode_key mcast_miss_encode_key
++	handle_option $config mcast_icp_query_timeout mcast_icp_query_timeout
++}
++
++config_multicast_icp_options() {
++	echo "# MULTICAST ICP OPTIONS"
++	config_foreach section_multicast_icp "multicast_icp"
++}
++
++section_internal_icon() {
++	local config="$1"
++	handle_option  $config icon_directory icon_directory
++	handle_boolean $config global_internal_static global_internal_static
++	handle_boolean $config short_icon_urls short_icon_urls
++}
++
++config_internal_icon_options() {
++	echo "# INTERNAL ICON OPTIONS"
++	config_foreach section_internal_icon "internal_icon"
++}
++
++section_error_page() {
++	local config="$1"
++	handle_option $config error_directory error_directory
++	handle_list   $config error_map error_map
++	handle_option $config err_html_text err_html_text
++	handle_list   $config deny_info deny_info
++}
++
++config_error_page_options() {
++	echo "# ERROR PAGE OPTIONS"
++	config_foreach section_error_page "error_page"
++}
++
++section_request_forwarding() {
++	local config="$1"
++	handle_boolean $config nonhierarchical_direct nonhierarchical_direct
++	handle_boolean $config prefer_direct prefer_direct
++	handle_boolean $config ignore_ims_on_miss ignore_ims_on_miss
++}
++
++config_request_forwarding_options() {
++	echo "# OPTIONS INFLUENCING REQUEST FORWARDING"
++	config_foreach section_request_forwarding "request_forwarding"
++	config_foreach section_access always_direct always_direct
++	config_foreach section_access never_direct never_direct
++}
++
++section_advanced_networking() {
++	local config="$1"
++	handle_option  $config max_filedescriptors max_filedescriptors
++	handle_option  $config accept_filter accept_filter
++	handle_option  $config tcp_recv_bufsize_bytes tcp_recv_bufsize "bytes"
++	handle_option  $config incoming_rate incoming_rate
++}
++
++config_advanced_networking_options() {
++	echo "# ADVANCED NETWORKING OPTIONS"
++	config_foreach section_advanced_networking "advanced_networking"
++}
++
++section_dns_options() {
++	local config="$1"
++	handle_boolean $config check_hostnames check_hostnames
++	handle_boolean $config allow_underscore allow_underscore
++	handle_option  $config cache_dns_program cache_dns_program
++	handle_option  $config dns_children dns_children
++	handle_option  $config dns_retransmit_interval_sec dns_retransmit_interval "seconds"
++	handle_option  $config dns_timeout_min dns_timeout "minutes"
++	handle_boolean $config dns_defnames dns_defnames
++	handle_list    $config dns_nameservers dns_nameservers
++	handle_option  $config hosts_file hosts_file
++	handle_list    $config dns_testnames dns_testnames
++	handle_option  $config append_domain append_domain
++	handle_boolean $config ignore_unknown_nameservers ignore_unknown_nameservers
++	handle_option  $config ipcache_size ipcache_size
++	handle_option  $config ipcache_low_pct ipcache_low
++	handle_option  $config ipcache_high_pct ipcache_high
++	handle_option  $config fqdncache_size fqdncache_size
++}
++
++config_dns_options() {
++	echo "# DNS OPTIONS"
++	config_foreach section_dns_options dns
++}
++
++section_miscellaneous() {
++	local config="$1"
++	handle_boolean $config memory_pools memory_pools
++	handle_option  $config memory_pools_limit_mb memory_pools_limit "MB"
++	handle_boolean $config forwarded_for forwarded_for
++	handle_option  $config cachemgr_passwd cachemgr_passwd
++	handle_boolean $config client_db client_db
++	handle_boolean $config reload_into_ims reload_into_ims
++	handle_option  $config maximum_single_addr_tries maximum_single_addr_tries
++	handle_boolean $config retry_on_error retry_on_error
++	handle_option  $config as_whois_server as_whois_server
++	handle_boolean $config offline_mode offline_mode
++	handle_option  $config uri_whitespace uri_whitespace
++	handle_option  $config coredump_dir coredump_dir
++	handle_option  $config chroot chroot
++	handle_boolean $config balance_on_multiple_ip balance_on_multiple_ip
++	handle_boolean $config pipeline_prefetch pipeline_prefetch
++	handle_option  $config high_response_time_warning high_response_time_warning
++	handle_option  $config high_page_fault_warning high_page_fault_warning
++	handle_option  $config high_memory_warning_kb high_memory_warning "KB"
++	handle_option  $config sleep_after_fork_msec sleep_after_fork
++	handle_boolean $config zero_buffers zero_buffers
++	handle_boolean $config windows_ipaddrchangemonitor windows_ipaddrchangemonitor
++}
++
++config_miscellaneous() {
++	echo "# MISCELLANEOUS"
++	config_foreach section_miscellaneous miscellaneous
++}
++
++config_squid() {
++	config_load squid
++
++	echo "# This is an automatically generated file"
++	config_authentication_options
++	config_access_controls
++	config_x_forwarded_for_options
++	config_ssl_options
++	config_network_options
++	config_neighbor_selection_algorithm
++	config_memory_cache_options
++	config_disk_cache_options
++	config_logfile_options
++	config_ftp_gatewaying_options
++	config_external_support_programs_options
++	config_url_rewriting_options
++	config_cache_tuning_options
++	config_http_options
++	config_timeouts
++	config_administrative_parameters
++	config_cache_registration_service
++	config_httpd_accelerator_options
++	config_delay_pool_parameters
++	config_wccp_options
++	config_persistent_connection_handling
++	config_cache_digest_options
++	config_snmp_options
++	config_icp_options
++	config_multicast_icp_options
++	config_internal_icon_options
++	config_error_page_options
++	config_request_forwarding_options
++	config_advanced_networking_options
++	config_dns_options
++	config_miscellaneous
++	echo "# Done."
++}
++
+diff --git a/package/squid/files/squid.init b/package/squid/files/squid.init
+new file mode 100644
+index 0000000..872747f
+--- /dev/null
++++ b/package/squid/files/squid.init
+@@ -0,0 +1,22 @@
++#!/bin/sh /etc/rc.common
++# Copyright (C) 2013 OpenWrt.org
++# Copyright (C) 2013 M. de Wit
++# This is free software, licensed under the GNU GPL General Public License v2.
++# See /LICENSE for more information.
++
++START=99
++SQUID_CONF=/tmp/squid.conf
++
++start() {
++	. /lib/functions/squid.sh
++	config_squid > $SQUID_CONF
++	mkdir -p /var/cache /var/logs
++	chmod ugo+rw /var/cache /var/logs
++	squid -z
++	squid -f $SQUID_CONF
++}
++
++stop() {
++	squid -f $SQUID_CONF -k shutdown
++}
++
