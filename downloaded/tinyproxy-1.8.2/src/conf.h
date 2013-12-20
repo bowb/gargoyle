@@ -49,6 +49,7 @@ struct config_s {
         char *ipAddr;
 #ifdef FILTER_ENABLE
         char *filter;
+ 	char *filter_httpswhitelist;
         unsigned int filter_url;        /* boolean */
         unsigned int filter_extended;   /* boolean */
         unsigned int filter_casesensitive;      /* boolean */

@@ -299,6 +299,7 @@ static struct request_s *process_request (struct conn_s *connptr,
         struct request_s *request;
         int ret;
         size_t request_len;
+	int https_connect = 0;
 
         /* NULL out all the fields so frees don't cause segfaults. */
         request =
@@ -399,6 +400,10 @@ BAD_REQUEST_ERROR:
                         goto fail;
                 }
 
+		if(strncasecmp(url, "https://", 8) == 0) {
+			https_connect = 1;				
+		}
+
                 /* Verify that the port in the CONNECT method is allowed */
                 if (!check_allowed_connect_ports (request->port,
                                                   config.connect_ports))
@@ -433,10 +438,30 @@ BAD_REQUEST_ERROR:
         }
 
 #ifdef FILTER_ENABLE
-        /*
+        if(config.filter_httpswhiteslist && https_connect == 1){
+		ret = filter_https_url (url);
+
+		if(ret) {
+			update_stats(STAT_DENIED);
+			
+			log_message(LOG_NOTICE,
+				"Proxying refused on filtered https url \"%s\"",
+				url);
+
+                        indicate_http_error (connptr, 403, "Filtered",
+                                             "detail",
+                                             "The request you made has been filtered",
+                                             "url", url, NULL);
+
+			goto fail;
+			
+		} 
+	}
+
+	/*
          * Filter restricted domains/urls
          */
-        if (config.filter) {
+        else if (config.filter) {
                 if (config.filter_url)
                         ret = filter_url (url);
                 else

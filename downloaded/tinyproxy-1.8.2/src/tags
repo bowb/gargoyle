@@ -1,0 +1,370 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ACL_NUMERIC	acl.c	/^        ACL_NUMERIC$/;"	e	enum:acl_type	file:
+ACL_STRING	acl.c	/^        ACL_STRING,$/;"	e	enum:acl_type	file:
+ADD_VAR_RET	html-error.c	247;"	d	file:
+ALNUM	conf.c	53;"	d	file:
+BEGIN	conf.c	78;"	d	file:
+BOOL	conf.c	51;"	d	file:
+BUFFER_HEAD	buffer.c	34;"	d	file:
+BUFFER_TAIL	buffer.c	35;"	d	file:
+CHECK_CRLF	reqs.c	72;"	d	file:
+CHECK_LWS	reqs.c	79;"	d	file:
+CONFFILE_HANDLER	conf.c	/^typedef int (*CONFFILE_HANDLER) (struct config_s *, const char *, regmatch_t[]);$/;"	t	file:
+END	conf.c	79;"	d	file:
+ERRORNUM_BUFSIZE	html-error.c	37;"	d	file:
+ERRPAGES_BUCKETCOUNT	html-error.c	38;"	d	file:
+ERRVAR_BUCKETCOUNT	html-error.c	232;"	d	file:
+FILTER_BUFFER_LEN	filter.c	33;"	d	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_addheader)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_allow)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_anonymous)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_bind)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_bindsame)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_connectport)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_defaulterrorfile)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_deny)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_disableviaheader)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_errorfile)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_filter)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_filtercasesensitive)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_filterdefaultdeny)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_filterextended)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_filterurls)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_group)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_listen)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_logfile)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_loglevel)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_maxclients)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_maxrequestsperchild)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_maxspareservers)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_minspareservers)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_nop)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_pidfile)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_port)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_reversebaseurl)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_reversemagic)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_reverseonly)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_reversepath)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_startservers)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_statfile)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_stathost)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_syslog)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_timeout)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_upstream)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_upstream_no)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_user)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_viaproxyname)$/;"	f	file:
+HANDLE_FUNC	conf.c	/^static HANDLE_FUNC (handle_xtinyproxy)$/;"	f	file:
+HANDLE_FUNC	conf.c	105;"	d	file:
+HEADER_BUCKETS	reqs.c	795;"	d	file:
+HTTP_LINE_LENGTH	reqs.c	55;"	d	file:
+INSERT_APPEND	vector.c	/^        INSERT_APPEND$/;"	e	enum:__anon7	file:
+INSERT_PREPEND	vector.c	/^        INSERT_PREPEND,$/;"	e	enum:__anon7	file:
+INT	conf.c	52;"	d	file:
+IP	conf.c	54;"	d	file:
+IPMASK	conf.c	55;"	d	file:
+IPV6	conf.c	56;"	d	file:
+IPV6MASK	conf.c	77;"	d	file:
+IPV6_LEN	acl.c	36;"	d	file:
+MAXIMUM_BUFFER_LENGTH	network.c	140;"	d	file:
+NUMBER_OF_HEADERS	http-message.c	78;"	d	file:
+PROXY_AGENT	reqs.c	277;"	d	file:
+READ_BUFFER_SIZE	buffer.c	211;"	d	file:
+RE_MAX_MATCHES	conf.c	86;"	d	file:
+SEGMENT_LEN	network.c	139;"	d	file:
+SERVER_COUNT_LOCK	child.c	65;"	d	file:
+SERVER_COUNT_UNLOCK	child.c	66;"	d	file:
+SERVER_DEC	child.c	127;"	d	file:
+SERVER_INC	child.c	120;"	d	file:
+SSL_CONNECTION_RESPONSE	reqs.c	276;"	d	file:
+STDCONF	conf.c	179;"	d	file:
+STR	conf.c	50;"	d	file:
+STRING_LENGTH	log.c	46;"	d	file:
+TIME_LENGTH	log.c	45;"	d	file:
+T_CONNECTED	child.c	/^enum child_status_t { T_EMPTY, T_WAITING, T_CONNECTED };$/;"	e	enum:child_status_t	file:
+T_EMPTY	child.c	/^enum child_status_t { T_EMPTY, T_WAITING, T_CONNECTED };$/;"	e	enum:child_status_t	file:
+T_WAITING	child.c	/^enum child_status_t { T_EMPTY, T_WAITING, T_CONNECTED };$/;"	e	enum:child_status_t	file:
+UPSTREAM_CONFIGURED	reqs.c	62;"	d	file:
+UPSTREAM_CONFIGURED	reqs.c	65;"	d	file:
+UPSTREAM_HOST	reqs.c	63;"	d	file:
+UPSTREAM_HOST	reqs.c	66;"	d	file:
+WS	conf.c	49;"	d	file:
+_child_lock_init	child.c	/^static void _child_lock_init (void)$/;"	f	file:
+_child_lock_release	child.c	/^static void _child_lock_release (void)$/;"	f	file:
+_child_lock_wait	child.c	/^static void _child_lock_wait (void)$/;"	f	file:
+access	acl.c	/^        acl_access_t access;$/;"	m	struct:acl_s	file:
+acl_s	acl.c	/^struct acl_s {$/;"	s	file:
+acl_string_processing	acl.c	/^acl_string_processing (struct acl_s *acl,$/;"	f	file:
+acl_type	acl.c	/^enum acl_type {$/;"	g	file:
+add_connect_port_allowed	connect-ports.c	/^void add_connect_port_allowed (int port, vector_t *connect_ports)$/;"	f
+add_error_variable	html-error.c	/^add_error_variable (struct conn_s *connptr, const char *key, const char *val)$/;"	f
+add_header_to_connection	reqs.c	/^add_header_to_connection (hashmap_t hashofheaders, char *header, size_t len)$/;"	f	file:
+add_new_errorpage	html-error.c	/^int add_new_errorpage (char *filepath, unsigned int errornum)$/;"	f
+add_standard_vars	html-error.c	/^int add_standard_vars (struct conn_s *connptr)$/;"	f
+add_to_buffer	buffer.c	/^int add_to_buffer (struct buffer_s *buffptr, unsigned char *data, size_t length)$/;"	f
+add_xtinyproxy_header	reqs.c	/^static int add_xtinyproxy_header (struct conn_s *connptr)$/;"	f	file:
+address	acl.c	/^        } address;$/;"	m	struct:acl_s	typeref:union:acl_s::__anon1	file:
+addrlen	child.c	/^static socklen_t addrlen;$/;"	v	file:
+already_init	filter.c	/^static int already_init = 0;$/;"	v	file:
+anonymous_insert	anonymous.c	/^int anonymous_insert (const char *s)$/;"	f
+anonymous_search	anonymous.c	/^int anonymous_search (const char *s)$/;"	f
+bind_socket	sock.c	/^bind_socket (int sockfd, const char *addr, int family)$/;"	f	file:
+body	http-message.c	/^        } body;$/;"	m	struct:http_message_s	typeref:struct:http_message_s::__anon6	file:
+buckets	hashmap.c	/^        struct hashbucket_s *buckets;$/;"	m	struct:hashmap_s	typeref:struct:hashmap_s::hashbucket_s	file:
+buffer_s	buffer.c	/^struct buffer_s {$/;"	s	file:
+buffer_size	buffer.c	/^size_t buffer_size (struct buffer_s *buffptr)$/;"	f
+bufline_s	buffer.c	/^struct bufline_s {$/;"	s	file:
+build_url	transparent-proxy.c	/^static int build_url (char **url, const char *host, int port, const char *path)$/;"	f	file:
+calloc_shared_memory	heap.c	/^void *calloc_shared_memory (size_t nmemb, size_t size)$/;"	f
+change_user	main.c	/^change_user (const char *program)$/;"	f	file:
+check_acl	acl.c	/^int check_acl (const char *ip, const char *host, vector_t access_list)$/;"	f
+check_allowed_connect_ports	connect-ports.c	/^int check_allowed_connect_ports (int port, vector_t connect_ports)$/;"	f
+check_match	conf.c	/^static int check_match (struct config_s *conf, const char *line)$/;"	f	file:
+check_numeric_acl	acl.c	/^static int check_numeric_acl (const struct acl_s *acl, const char *ip)$/;"	f	file:
+child_close_sock	child.c	/^void child_close_sock (void)$/;"	f
+child_config	child.c	/^} child_config;$/;"	v	typeref:struct:child_config_s	file:
+child_config_s	child.c	/^static struct child_config_s {$/;"	s	file:
+child_configure	child.c	/^short int child_configure (child_config_t type, unsigned int val)$/;"	f
+child_kill_children	child.c	/^void child_kill_children (int sig)$/;"	f
+child_listening_sock	child.c	/^int child_listening_sock (uint16_t port)$/;"	f
+child_main	child.c	/^static void child_main (struct child_s *ptr)$/;"	f	file:
+child_main_loop	child.c	/^void child_main_loop (void)$/;"	f
+child_make	child.c	/^static pid_t child_make (struct child_s *ptr)$/;"	f	file:
+child_pool_create	child.c	/^short int child_pool_create (void)$/;"	f
+child_ptr	child.c	/^static struct child_s *child_ptr;$/;"	v	typeref:struct:child_s	file:
+child_s	child.c	/^struct child_s {$/;"	s	file:
+child_sighup_handler	child.c	/^static void child_sighup_handler (int sig)$/;"	f	file:
+child_status_t	child.c	/^enum child_status_t { T_EMPTY, T_WAITING, T_CONNECTED };$/;"	g	file:
+chomp	text.c	/^ssize_t chomp (char *buffer, size_t length)$/;"	f
+close_log_file	log.c	/^void close_log_file (void)$/;"	f
+code	http-message.c	/^                int code;$/;"	m	struct:http_message_s::__anon4	file:
+config	main.c	/^struct config_s config;$/;"	v	typeref:struct:config_s
+config_compile_regex	conf.c	/^config_compile_regex (void)$/;"	f
+config_defaults	main.c	/^struct config_s config_defaults;$/;"	v	typeref:struct:config_s
+config_free_regex	conf.c	/^config_free_regex (void)$/;"	f	file:
+config_parse	conf.c	/^static int config_parse (struct config_s *conf, FILE * f)$/;"	f	file:
+connect_to_upstream	reqs.c	/^connect_to_upstream (struct conn_s *connptr, struct request_s *request)$/;"	f	file:
+connects	child.c	/^        unsigned int connects;$/;"	m	struct:child_s	file:
+cpat	filter.c	/^        regex_t *cpat;$/;"	m	struct:filter_list	file:
+cre	conf.c	/^        regex_t *cre;$/;"	m	struct:__anon3	file:
+create_file_safely	utils.c	/^int create_file_safely (const char *filename, unsigned int truncate_file)$/;"	f
+data	hashmap.c	/^        void *data;$/;"	m	struct:hashentry_s	file:
+data	vector.c	/^        void *data;$/;"	m	struct:vectorentry_s	file:
+debugging_calloc	heap.c	/^void *debugging_calloc (size_t nmemb, size_t size, const char *file,$/;"	f
+debugging_free	heap.c	/^void debugging_free (void *ptr, const char *file, unsigned long line)$/;"	f
+debugging_malloc	heap.c	/^void *debugging_malloc (size_t size, const char *file, unsigned long line)$/;"	f
+debugging_realloc	heap.c	/^void *debugging_realloc (void *ptr, size_t size, const char *file,$/;"	f
+debugging_strdup	heap.c	/^char *debugging_strdup (const char *s, const char *file, unsigned long line)$/;"	f
+default_policy	filter.c	/^static filter_policy_t default_policy = FILTER_DEFAULT_ALLOW;$/;"	v	file:
+delete_buffer	buffer.c	/^void delete_buffer (struct buffer_s *buffptr)$/;"	f
+delete_hashbucket	hashmap.c	/^static int delete_hashbucket (struct hashbucket_s *bucket)$/;"	f	file:
+destroy_conn	conns.c	/^void destroy_conn (struct conn_s *connptr)$/;"	f
+directives	conf.c	/^} directives[] = {$/;"	v	typeref:struct:__anon3
+display_license	main.c	/^display_license (void)$/;"	f	file:
+display_usage	main.c	/^display_usage (void)$/;"	f	file:
+display_version	main.c	/^display_version (void)$/;"	f	file:
+do_transparent_proxy	transparent-proxy.c	/^do_transparent_proxy (struct conn_s *connptr, hashmap_t hashofheaders,$/;"	f
+end_iterator	hashmap.c	/^        hashmap_iter end_iterator;$/;"	m	struct:hashmap_s	file:
+err	filter.c	/^static int err;$/;"	v	file:
+establish_http_connection	reqs.c	/^establish_http_connection (struct conn_s *connptr, struct request_s *request)$/;"	f	file:
+extract_http_url	reqs.c	/^static int extract_http_url (const char *url, struct request_s *request)$/;"	f	file:
+extract_ssl_url	reqs.c	/^static int extract_ssl_url (const char *url, struct request_s *request)$/;"	f	file:
+fill_netmask_array	acl.c	/^fill_netmask_array (char *bitmask_string, unsigned char array[],$/;"	f	file:
+filter_destroy	filter.c	/^void filter_destroy (void)$/;"	f
+filter_domain	filter.c	/^int filter_domain (const char *host)$/;"	f
+filter_init	filter.c	/^void filter_init (void)$/;"	f
+filter_list	filter.c	/^struct filter_list {$/;"	s	file:
+filter_reload	filter.c	/^void filter_reload (void)$/;"	f
+filter_set_default_policy	filter.c	/^void filter_set_default_policy (filter_policy_t policy)$/;"	f
+filter_url	filter.c	/^int filter_url (const char *url)$/;"	f
+fl	filter.c	/^static struct filter_list *fl = NULL;$/;"	v	typeref:struct:filter_list	file:
+flush_access_list	acl.c	/^void flush_access_list (vector_t access_list)$/;"	f
+free_added_headers	conf.c	/^free_added_headers (vector_t add_headers)$/;"	f	file:
+free_config	conf.c	/^static void free_config (struct config_s *conf)$/;"	f	file:
+free_connect_ports_list	connect-ports.c	/^void free_connect_ports_list (vector_t connect_ports)$/;"	f
+free_line	buffer.c	/^static void free_line (struct bufline_s *line)$/;"	f	file:
+free_request_struct	reqs.c	/^static void free_request_struct (struct request_s *request)$/;"	f	file:
+free_reversepath_list	reverse-proxy.c	/^void free_reversepath_list (struct reversepath *reverse)$/;"	f
+free_upstream_list	upstream.c	/^void free_upstream_list (struct upstream *up)$/;"	f
+full_inet_pton	network.c	/^int full_inet_pton (const char *ip, void *dst)$/;"	f
+get_all_headers	reqs.c	/^static int get_all_headers (int fd, hashmap_t hashofheaders)$/;"	f	file:
+get_bool_arg	conf.c	/^static int get_bool_arg (const char *line, regmatch_t * match)$/;"	f	file:
+get_content_length	reqs.c	/^static long get_content_length (hashmap_t hashofheaders)$/;"	f	file:
+get_html_file	html-error.c	/^static char *get_html_file (unsigned int errornum)$/;"	f	file:
+get_id	main.c	/^get_id (char *str)$/;"	f	file:
+get_ip_string	network.c	/^char *get_ip_string (struct sockaddr *sa, char *buf, size_t buflen)$/;"	f
+get_long_arg	conf.c	/^get_long_arg (const char *line, regmatch_t * match)$/;"	f	file:
+get_request_entity	reqs.c	/^get_request_entity(struct conn_s *connptr)$/;"	f	file:
+get_string_arg	conf.c	/^static char *get_string_arg (const char *line, regmatch_t * match)$/;"	f	file:
+getpeer_information	sock.c	/^int getpeer_information (int fd, char *ipaddr, char *string_addr)$/;"	f
+getsock_ip	sock.c	/^int getsock_ip (int fd, char *ipaddr)$/;"	f
+handle_connection	reqs.c	/^void handle_connection (int fd)$/;"	f
+handler	conf.c	/^        CONFFILE_HANDLER handler;$/;"	m	struct:__anon3	file:
+hashbucket_s	hashmap.c	/^struct hashbucket_s {$/;"	s	file:
+hashentry_s	hashmap.c	/^struct hashentry_s {$/;"	s	file:
+hashfunc	hashmap.c	/^static int hashfunc (const char *key, unsigned int size)$/;"	f	file:
+hashmap_create	hashmap.c	/^hashmap_t hashmap_create (unsigned int nbuckets)$/;"	f
+hashmap_delete	hashmap.c	/^int hashmap_delete (hashmap_t map)$/;"	f
+hashmap_entry_by_key	hashmap.c	/^ssize_t hashmap_entry_by_key (hashmap_t map, const char *key, void **data)$/;"	f
+hashmap_find	hashmap.c	/^hashmap_iter hashmap_find (hashmap_t map, const char *key)$/;"	f
+hashmap_first	hashmap.c	/^hashmap_iter hashmap_first (hashmap_t map)$/;"	f
+hashmap_insert	hashmap.c	/^hashmap_insert (hashmap_t map, const char *key, const void *data, size_t len)$/;"	f
+hashmap_is_end	hashmap.c	/^int hashmap_is_end (hashmap_t map, hashmap_iter iter)$/;"	f
+hashmap_remove	hashmap.c	/^ssize_t hashmap_remove (hashmap_t map, const char *key)$/;"	f
+hashmap_return_entry	hashmap.c	/^hashmap_return_entry (hashmap_t map, hashmap_iter iter, char **key, void **data)$/;"	f
+hashmap_s	hashmap.c	/^struct hashmap_s {$/;"	s	file:
+hashmap_search	hashmap.c	/^ssize_t hashmap_search (hashmap_t map, const char *key)$/;"	f
+head	buffer.c	/^        struct bufline_s *head; \/* top of the buffer *\/$/;"	m	struct:buffer_s	typeref:struct:buffer_s::bufline_s	file:
+head	hashmap.c	/^        struct hashentry_s *head, *tail;$/;"	m	struct:hashbucket_s	typeref:struct:hashbucket_s::hashentry_s	file:
+head	vector.c	/^        struct vectorentry_s *head;$/;"	m	struct:vector_s	typeref:struct:vector_s::vectorentry_s	file:
+headers	http-message.c	/^        } headers;$/;"	m	struct:http_message_s	typeref:struct:http_message_s::__anon5	file:
+http_message_add_headers	http-message.c	/^http_message_add_headers (http_message_t msg, const char **headers,$/;"	f
+http_message_create	http-message.c	/^http_message_create (int response_code, const char *response_string)$/;"	f
+http_message_destroy	http-message.c	/^int http_message_destroy (http_message_t msg)$/;"	f
+http_message_s	http-message.c	/^struct http_message_s {$/;"	s	file:
+http_message_send	http-message.c	/^int http_message_send (http_message_t msg, int fd)$/;"	f
+http_message_set_body	http-message.c	/^int http_message_set_body (http_message_t msg, const char *body, size_t len)$/;"	f
+http_message_set_response	http-message.c	/^http_message_set_response (http_message_t msg,$/;"	f
+indicate_http_error	html-error.c	/^indicate_http_error (struct conn_s *connptr, int number,$/;"	f
+init_access_list	acl.c	/^static int init_access_list(vector_t *access_list)$/;"	f	file:
+init_stats	stats.c	/^void init_stats (void)$/;"	f
+initialize_config_defaults	main.c	/^static void initialize_config_defaults (struct config_s *conf)$/;"	f	file:
+initialize_conn	conns.c	/^struct conn_s *initialize_conn (int client_fd, const char *ipaddr,$/;"	f
+initialize_with_defaults	conf.c	/^static void initialize_with_defaults (struct config_s *conf,$/;"	f	file:
+insert_acl	acl.c	/^int insert_acl (char *location, acl_access_t access_type, vector_t *access_list)$/;"	f
+ip	acl.c	/^                } ip;$/;"	m	union:acl_s::__anon1	typeref:struct:acl_s::__anon1::__anon2	file:
+is_anonymous_enabled	anonymous.c	/^short int is_anonymous_enabled (void)$/;"	f
+is_http_message_valid	http-message.c	/^static int is_http_message_valid (http_message_t msg)$/;"	f	file:
+key	hashmap.c	/^        char *key;$/;"	m	struct:hashentry_s	file:
+len	hashmap.c	/^        size_t len;$/;"	m	struct:hashentry_s	file:
+len	vector.c	/^        size_t len;$/;"	m	struct:vectorentry_s	file:
+length	buffer.c	/^        size_t length;          \/* length of the string of data *\/$/;"	m	struct:bufline_s	file:
+length	http-message.c	/^                size_t length;$/;"	m	struct:http_message_s::__anon6	file:
+level	conf.c	/^        int level;$/;"	m	struct:log_levels_s	file:
+listen_sock	sock.c	/^int listen_sock (uint16_t port, socklen_t * addrlen)$/;"	f
+listenfd	child.c	/^static int listenfd;$/;"	v	file:
+load_config_file	conf.c	/^static int load_config_file (const char *config_fname, struct config_s *conf)$/;"	f	file:
+lock_fd	child.c	/^static int lock_fd = -1;$/;"	v	file:
+lock_it	child.c	/^static struct flock lock_it, unlock_it;$/;"	v	typeref:struct:flock	file:
+log_file_fd	log.c	/^int log_file_fd = -1;$/;"	v
+log_level	log.c	/^static int log_level = LOG_INFO;$/;"	v	file:
+log_levels	conf.c	/^static struct log_levels_s log_levels[] = {$/;"	v	typeref:struct:log_levels_s	file:
+log_levels_s	conf.c	/^struct log_levels_s {$/;"	s	file:
+log_message	log.c	/^void log_message (int level, const char *fmt, ...)$/;"	f
+log_message_storage	log.c	/^static vector_t log_message_storage;$/;"	v	file:
+logging_initialized	log.c	/^static unsigned int logging_initialized = FALSE;     \/* boolean *\/$/;"	v	file:
+lookup_variable	html-error.c	/^static char *lookup_variable (struct conn_s *connptr, const char *varname)$/;"	f	file:
+main	main.c	/^main (int argc, char **argv)$/;"	f
+makedaemon	daemon.c	/^void makedaemon (void)$/;"	f
+makenewline	buffer.c	/^static struct bufline_s *makenewline (unsigned char *data, size_t length)$/;"	f	file:
+malloc_shared_memory	heap.c	/^void *malloc_shared_memory (size_t size)$/;"	f
+mask	acl.c	/^                        unsigned char mask[IPV6_LEN];$/;"	m	struct:acl_s::__anon1::__anon2	file:
+maxclients	child.c	/^        unsigned int maxclients, maxrequestsperchild;$/;"	m	struct:child_config_s	file:
+maxrequestsperchild	child.c	/^        unsigned int maxclients, maxrequestsperchild;$/;"	m	struct:child_config_s	file:
+maxspareservers	child.c	/^        unsigned int maxspareservers, minspareservers, startservers;$/;"	m	struct:child_config_s	file:
+minspareservers	child.c	/^        unsigned int maxspareservers, minspareservers, startservers;$/;"	m	struct:child_config_s	file:
+ndirectives	conf.c	/^const unsigned int ndirectives = sizeof (directives) \/ sizeof (directives[0]);$/;"	v
+new_buffer	buffer.c	/^struct buffer_s *new_buffer (void)$/;"	f
+next	buffer.c	/^        struct bufline_s *next; \/* pointer to next in linked list *\/$/;"	m	struct:bufline_s	typeref:struct:bufline_s::bufline_s	file:
+next	filter.c	/^        struct filter_list *next;$/;"	m	struct:filter_list	typeref:struct:filter_list::filter_list	file:
+next	hashmap.c	/^        struct hashentry_s *prev, *next;$/;"	m	struct:hashentry_s	typeref:struct:hashentry_s::	file:
+next	vector.c	/^        struct vectorentry_s *next;$/;"	m	struct:vectorentry_s	typeref:struct:vectorentry_s::vectorentry_s	file:
+num_badcons	stats.c	/^        unsigned long int num_badcons;$/;"	m	struct:stat_s	file:
+num_denied	stats.c	/^        unsigned long int num_denied;$/;"	m	struct:stat_s	file:
+num_entries	vector.c	/^        size_t num_entries;$/;"	m	struct:vector_s	file:
+num_open	stats.c	/^        unsigned long int num_open;$/;"	m	struct:stat_s	file:
+num_refused	stats.c	/^        unsigned long int num_refused;$/;"	m	struct:stat_s	file:
+num_reqs	stats.c	/^        unsigned long int num_reqs;$/;"	m	struct:stat_s	file:
+octet	acl.c	/^                        unsigned char octet[IPV6_LEN];$/;"	m	struct:acl_s::__anon1::__anon2	file:
+open_log_file	log.c	/^int open_log_file (const char *log_file_name)$/;"	f
+opensock	sock.c	/^int opensock (const char *host, int port, const char *bind_to)$/;"	f
+pat	filter.c	/^        char *pat;$/;"	m	struct:filter_list	file:
+pidfile_create	utils.c	/^pidfile_create (const char *filename)$/;"	f
+pos	buffer.c	/^        size_t pos;             \/* start sending from this offset *\/$/;"	m	struct:bufline_s	file:
+prev	hashmap.c	/^        struct hashentry_s *prev, *next;$/;"	m	struct:hashentry_s	typeref:struct:hashentry_s::hashentry_s	file:
+process_client_headers	reqs.c	/^process_client_headers (struct conn_s *connptr, hashmap_t hashofheaders)$/;"	f	file:
+process_cmdline	main.c	/^process_cmdline (int argc, char **argv, struct config_s *conf)$/;"	f	file:
+process_request	reqs.c	/^static struct request_s *process_request (struct conn_s *connptr,$/;"	f	file:
+process_server_headers	reqs.c	/^static int process_server_headers (struct conn_s *connptr)$/;"	f	file:
+pull_client_data	reqs.c	/^static int pull_client_data (struct conn_s *connptr, long int length)$/;"	f	file:
+re	conf.c	/^        const char *re;$/;"	m	struct:__anon3	file:
+read_buffer	buffer.c	/^ssize_t read_buffer (int fd, struct buffer_s * buffptr)$/;"	f
+read_request_line	reqs.c	/^static int read_request_line (struct conn_s *connptr)$/;"	f	file:
+readline	network.c	/^ssize_t readline (int fd, char **whole_buffer)$/;"	f
+received_sighup	main.c	/^unsigned int received_sighup = FALSE;   \/* boolean *\/$/;"	v
+relay_connection	reqs.c	/^static void relay_connection (struct conn_s *connptr)$/;"	f	file:
+reload_config	main.c	/^int reload_config (void)$/;"	f
+reload_config_file	conf.c	/^int reload_config_file (const char *config_fname, struct config_s *conf,$/;"	f
+remove_connection_headers	reqs.c	/^static int remove_connection_headers (hashmap_t hashofheaders)$/;"	f	file:
+remove_from_buffer	buffer.c	/^static struct bufline_s *remove_from_buffer (struct buffer_s *buffptr)$/;"	f	file:
+response	http-message.c	/^        } response;$/;"	m	struct:http_message_s	typeref:struct:http_message_s::__anon4	file:
+reverse_rewrite_url	reverse-proxy.c	/^char *reverse_rewrite_url (struct conn_s *connptr, hashmap_t hashofheaders,$/;"	f
+reversepath_add	reverse-proxy.c	/^void reversepath_add (const char *path, const char *url,$/;"	f
+reversepath_get	reverse-proxy.c	/^struct reversepath *reversepath_get (char *url, struct reversepath *reverse)$/;"	f
+safe_read	network.c	/^ssize_t safe_read (int fd, char *buffer, size_t count)$/;"	f
+safe_write	network.c	/^ssize_t safe_write (int fd, const char *buffer, size_t count)$/;"	f
+send_html_file	html-error.c	/^send_html_file (FILE *infile, struct conn_s *connptr)$/;"	f
+send_http_error_message	html-error.c	/^int send_http_error_message (struct conn_s *connptr)$/;"	f
+send_http_headers	html-error.c	/^int send_http_headers (struct conn_s *connptr, int code, const char *message)$/;"	f
+send_http_message	utils.c	/^send_http_message (struct conn_s *connptr, int http_code,$/;"	f
+send_ssl_response	reqs.c	/^static int send_ssl_response (struct conn_s *connptr)$/;"	f	file:
+send_stored_logs	log.c	/^void send_stored_logs (void)$/;"	f
+servers_waiting	child.c	/^static unsigned int *servers_waiting;   \/* servers waiting for a connection *\/$/;"	v	file:
+set_bool_arg	conf.c	/^set_bool_arg (unsigned int *var, const char *line, regmatch_t * match)$/;"	f	file:
+set_int_arg	conf.c	/^set_int_arg (unsigned int *var, const char *line, regmatch_t * match)$/;"	f	file:
+set_log_level	log.c	/^void set_log_level (int level)$/;"	f
+set_signal_handler	daemon.c	/^signal_func *set_signal_handler (int signo, signal_func * func)$/;"	f
+set_string_arg	conf.c	/^static int set_string_arg (char **var, const char *line, regmatch_t * match)$/;"	f	file:
+setup_logging	log.c	/^int setup_logging (void)$/;"	f
+showstats	stats.c	/^showstats (struct conn_s *connptr)$/;"	f
+shutdown_logging	log.c	/^void shutdown_logging (void)$/;"	f
+size	buffer.c	/^        size_t size;            \/* total size of the buffer *\/$/;"	m	struct:buffer_s	file:
+size	hashmap.c	/^        unsigned int size;$/;"	m	struct:hashmap_s	file:
+socket_blocking	sock.c	/^int socket_blocking (int sock)$/;"	f
+socket_nonblocking	sock.c	/^int socket_nonblocking (int sock)$/;"	f
+startservers	child.c	/^        unsigned int maxspareservers, minspareservers, startservers;$/;"	m	struct:child_config_s	file:
+stat_s	stats.c	/^struct stat_s {$/;"	s	file:
+stats	stats.c	/^static struct stat_s *stats;$/;"	v	typeref:struct:stat_s	file:
+status	child.c	/^        enum child_status_t status;$/;"	m	struct:child_s	typeref:enum:child_s::child_status_t	file:
+string	acl.c	/^                char *string;$/;"	m	union:acl_s::__anon1	file:
+string	buffer.c	/^        unsigned char *string;  \/* the actual string of data *\/$/;"	m	struct:bufline_s	file:
+string	conf.c	/^        const char *string;$/;"	m	struct:log_levels_s	file:
+string	http-message.c	/^                const char *string;$/;"	m	struct:http_message_s::__anon4	file:
+strings	http-message.c	/^                const char **strings;$/;"	m	struct:http_message_s::__anon5	file:
+strip_return_port	reqs.c	/^static int strip_return_port (char *host)$/;"	f	file:
+strip_username_password	reqs.c	/^static void strip_username_password (char *host)$/;"	f	file:
+strlcat	text.c	/^size_t strlcat (char *dst, const char *src, size_t size)$/;"	f
+strlcpy	text.c	/^size_t strlcpy (char *dst, const char *src, size_t size)$/;"	f
+syslog_level	log.c	/^static const char *syslog_level[] = {$/;"	v	file:
+tail	buffer.c	/^        struct bufline_s *tail; \/* bottom of the buffer *\/$/;"	m	struct:buffer_s	typeref:struct:buffer_s::bufline_s	file:
+tail	hashmap.c	/^        struct hashentry_s *head, *tail;$/;"	m	struct:hashbucket_s	typeref:struct:hashbucket_s::	file:
+tail	vector.c	/^        struct vectorentry_s *tail;$/;"	m	struct:vector_s	typeref:struct:vector_s::vectorentry_s	file:
+takesig	main.c	/^takesig (int sig)$/;"	f	file:
+text	http-message.c	/^                const char *text;$/;"	m	struct:http_message_s::__anon6	file:
+tid	child.c	/^        pid_t tid;$/;"	m	struct:child_s	file:
+total	http-message.c	/^                unsigned int total;$/;"	m	struct:http_message_s::__anon5	file:
+type	acl.c	/^        enum acl_type type;$/;"	m	struct:acl_s	typeref:enum:acl_s::acl_type	file:
+unlock_it	child.c	/^static struct flock lock_it, unlock_it;$/;"	v	typeref:struct:	file:
+update_stats	stats.c	/^int update_stats (status_t update_level)$/;"	f
+upstream_add	upstream.c	/^void upstream_add (const char *host, int port, const char *domain,$/;"	f
+upstream_build	upstream.c	/^static struct upstream *upstream_build (const char *host, int port, const char *domain)$/;"	f	file:
+upstream_get	upstream.c	/^struct upstream *upstream_get (char *host, struct upstream *up)$/;"	f
+used	http-message.c	/^                unsigned int used;$/;"	m	struct:http_message_s::__anon5	file:
+vector_append	vector.c	/^int vector_append (vector_t vector, void *data, size_t len)$/;"	f
+vector_create	vector.c	/^vector_t vector_create (void)$/;"	f
+vector_delete	vector.c	/^int vector_delete (vector_t vector)$/;"	f
+vector_getentry	vector.c	/^void *vector_getentry (vector_t vector, size_t pos, size_t * size)$/;"	f
+vector_insert	vector.c	/^vector_insert (vector_t      vector,$/;"	f	file:
+vector_length	vector.c	/^ssize_t vector_length (vector_t vector)$/;"	f
+vector_pos_t	vector.c	/^} vector_pos_t;$/;"	t	typeref:enum:__anon7	file:
+vector_prepend	vector.c	/^int vector_prepend (vector_t vector, void *data, size_t len)$/;"	f
+vector_s	vector.c	/^struct vector_s {$/;"	s	file:
+vectorentry_s	vector.c	/^struct vectorentry_s {$/;"	s	file:
+write_buffer	buffer.c	/^ssize_t write_buffer (int fd, struct buffer_s * buffptr)$/;"	f
+write_message	network.c	/^int write_message (int fd, const char *fmt, ...)$/;"	f
+write_via_header	reqs.c	/^write_via_header (int fd, hashmap_t hashofheaders,$/;"	f	file:
