@@ -1,0 +1,1161 @@
+diff -ruN a/package/tinyproxy/patches/121-add_server_name_indication_filter.patch b/package/tinyproxy/patches/121-add_server_name_indication_filter.patch
+--- a/package/tinyproxy/patches/121-add_server_name_indication_filter.patch	1969-12-31 17:00:00.000000000 -0700
++++ b/package/tinyproxy/patches/121-add_server_name_indication_filter.patch	2014-01-05 14:22:46.537631597 -0700
+@@ -0,0 +1,1157 @@
++diff --git a/src/Makefile.am b/src/Makefile.am
++index 0b6d45d..f804c05 100644
++--- a/src/Makefile.am
+++++ b/src/Makefile.am
++@@ -33,6 +33,7 @@ tinyproxy_SOURCES = \
++ 	hashmap.c hashmap.h \
++ 	heap.c heap.h \
++ 	html-error.c html-error.h \
+++	tls-error.c tls-error.h \
++ 	http-message.c http-message.h \
++ 	log.c log.h \
++ 	network.c network.h \
++diff --git a/src/Makefile.in b/src/Makefile.in
++index 1bd5750..d5f2e38 100644
++--- a/src/Makefile.in
+++++ b/src/Makefile.in
++@@ -72,7 +72,7 @@ am_tinyproxy_OBJECTS = acl.$(OBJEXT) anonymous.$(OBJEXT) \
++ 	conns.$(OBJEXT) daemon.$(OBJEXT) hashmap.$(OBJEXT) \
++ 	heap.$(OBJEXT) html-error.$(OBJEXT) http-message.$(OBJEXT) \
++ 	log.$(OBJEXT) network.$(OBJEXT) reqs.$(OBJEXT) sock.$(OBJEXT) \
++-	stats.$(OBJEXT) text.$(OBJEXT) main.$(OBJEXT) utils.$(OBJEXT) \
+++	stats.$(OBJEXT) text.$(OBJEXT) tls-error.$(OBJEXT) main.$(OBJEXT) utils.$(OBJEXT) \
++ 	vector.$(OBJEXT) upstream.$(OBJEXT) connect-ports.$(OBJEXT)
++ tinyproxy_OBJECTS = $(am_tinyproxy_OBJECTS)
++ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
++@@ -224,6 +224,7 @@ tinyproxy_SOURCES = \
++ 	hashmap.c hashmap.h \
++ 	heap.c heap.h \
++ 	html-error.c html-error.h \
+++	tls-error.c tls-error.h \
++ 	http-message.c http-message.h \
++ 	log.c log.h \
++ 	network.c network.h \
++diff --git a/src/child.c b/src/child.c
++index 34e20e0..695d7f3 100644
++--- a/src/child.c
+++++ b/src/child.c
++@@ -175,6 +175,7 @@ static void child_sighup_handler (int sig)
++ 
++ #ifdef FILTER_ENABLE
++                 filter_reload ();
+++		filter_https_reload();
++ #endif /* FILTER_ENABLE */
++         }
++ }
++@@ -441,6 +442,7 @@ void child_main_loop (void)
++ 
++ #ifdef FILTER_ENABLE
++                         filter_reload ();
+++			filter_https_reload();
++ #endif /* FILTER_ENABLE */
++ 
++                         /* propagate filter reload to all children */
++diff --git a/src/conf.c b/src/conf.c
++index 86f5672..fabaf93 100644
++--- a/src/conf.c
+++++ b/src/conf.c
++@@ -126,6 +126,7 @@ static HANDLE_FUNC (handle_errorfile);
++ static HANDLE_FUNC (handle_addheader);
++ #ifdef FILTER_ENABLE
++ static HANDLE_FUNC (handle_filter);
+++static HANDLE_FUNC (handle_filterhttpswhitelist);
++ static HANDLE_FUNC (handle_filtercasesensitive);
++ static HANDLE_FUNC (handle_filterdefaultdeny);
++ static HANDLE_FUNC (handle_filterextended);
++@@ -236,6 +237,7 @@ struct {
++ #ifdef FILTER_ENABLE
++         /* filtering */
++         STDCONF ("filter", STR, handle_filter),
+++	STDCONF ("filterhttpswhitelist", STR, handle_filterhttpswhitelist),
++         STDCONF ("filterurls", BOOL, handle_filterurls),
++         STDCONF ("filterextended", BOOL, handle_filterextended),
++         STDCONF ("filterdefaultdeny", BOOL, handle_filterdefaultdeny),
++@@ -291,6 +293,8 @@ static void free_config (struct config_s *conf)
++         safefree (conf->ipAddr);
++ #ifdef FILTER_ENABLE
++         safefree (conf->filter);
+++	safefree (conf->filter_httpswhitelist);
+++
++ #endif                          /* FILTER_ENABLE */
++ #ifdef REVERSE_SUPPORT
++         free_reversepath_list(conf->reversepath_list);
++@@ -474,6 +478,10 @@ static void initialize_with_defaults (struct config_s *conf,
++                 conf->filter = safestrdup (defaults->filter);
++         }
++ 
+++	if(defaults->filter_httpswhitelist) {
+++		conf->filter_httpswhitelist = safestrdup(defaults->filter_httpswhitelist);
+++	}
+++
++         conf->filter_url = defaults->filter_url;
++         conf->filter_extended = defaults->filter_extended;
++         conf->filter_casesensitive = defaults->filter_casesensitive;
++@@ -964,6 +972,11 @@ static HANDLE_FUNC (handle_filterurls)
++         return set_bool_arg (&conf->filter_url, line, &match[2]);
++ }
++ 
+++static HANDLE_FUNC (handle_filterhttpswhitelist)
+++{
+++	return set_string_arg(&conf->filter_httpswhitelist, line, &match[2]);
+++}
+++
++ static HANDLE_FUNC (handle_filterextended)
++ {
++         return set_bool_arg (&conf->filter_extended, line, &match[2]);
++diff --git a/src/conf.h b/src/conf.h
++index f62a854..4d04f80 100644
++--- a/src/conf.h
+++++ b/src/conf.h
++@@ -49,6 +49,7 @@ struct config_s {
++         char *ipAddr;
++ #ifdef FILTER_ENABLE
++         char *filter;
+++ 	char *filter_httpswhitelist;
++         unsigned int filter_url;        /* boolean */
++         unsigned int filter_extended;   /* boolean */
++         unsigned int filter_casesensitive;      /* boolean */
++diff --git a/src/conns.c b/src/conns.c
++index 94faeea..65e41bd 100644
++--- a/src/conns.c
+++++ b/src/conns.c
++@@ -89,7 +89,13 @@ struct conn_s *initialize_conn (int client_fd, const char *ipaddr,
++         connptr->reversepath = NULL;
++ #endif
++ 
++-        return connptr;
+++	connptr->server_name_indication = NULL;
+++	connptr->is_ssl = 0;
+++	connptr->ssl_handshake = NULL;
+++	connptr->ssl_handshake_len = 0;
+++	connptr->tls_major_ver = 0;
+++	connptr->tls_minor_ver = 0;        
+++	return connptr;
++ 
++ error_exit:
++         /*
++@@ -142,7 +148,13 @@ void destroy_conn (struct conn_s *connptr)
++                 safefree (connptr->reversepath);
++ #endif
++ 
++-        safefree (connptr);
+++	if(connptr->server_name_indication)
+++		safefree(connptr->server_name_indication);
+++
+++	if(connptr->ssl_handshake)
+++		safefree(connptr->ssl_handshake);
+++
+++	safefree (connptr);
++ 
++         update_stats (STAT_CLOSE);
++ }
++diff --git a/src/conns.h b/src/conns.h
++index b63d026..f62af67 100644
++--- a/src/conns.h
+++++ b/src/conns.h
++@@ -86,6 +86,13 @@ struct conn_s {
++          * Pointer to upstream proxy.
++          */
++         struct upstream *upstream_proxy;
+++
+++	char *server_name_indication;
+++	int is_ssl;
+++	char *ssl_handshake;
+++	ssize_t ssl_handshake_len;
+++	unsigned char tls_major_ver;
+++	unsigned char tls_minor_ver;
++ };
++ 
++ /*
++diff --git a/src/filter.c b/src/filter.c
++index 3164191..7b38d40 100644
++--- a/src/filter.c
+++++ b/src/filter.c
++@@ -41,9 +41,102 @@ struct filter_list {
++ };
++ 
++ static struct filter_list *fl = NULL;
+++static struct filter_list *fl_https = NULL;
++ static int already_init = 0;
+++static int https_already_init = 0;
++ static filter_policy_t default_policy = FILTER_DEFAULT_ALLOW;
++ 
+++
+++/*
+++ * Initializes a linked list of strings containing https hosts/urls to be filtered
+++ */
+++void filter_https_init (void)
+++{
+++        FILE *fd;
+++        struct filter_list *p;
+++        char buf[FILTER_BUFFER_LEN];
+++        char *s;
+++        int cflags;
+++
+++        if (fl_https || https_already_init) {
+++                return;
+++        }
+++
+++        fd = fopen (config.filter_httpswhitelist, "r");
+++        if (!fd) {
+++                return;
+++        }
+++
+++        p = NULL;
+++
+++        cflags = REG_NEWLINE | REG_NOSUB;
+++        if (config.filter_extended)
+++                cflags |= REG_EXTENDED;
+++        if (!config.filter_casesensitive)
+++                cflags |= REG_ICASE;
+++
+++        while (fgets (buf, FILTER_BUFFER_LEN, fd)) {
+++                /*
+++                 * Remove any trailing white space and
+++                 * comments.
+++                 */
+++                s = buf;
+++                while (*s) {
+++                        if (isspace ((unsigned char) *s))
+++                                break;
+++                        if (*s == '#') {
+++                                /*
+++                                 * If the '#' char is preceeded by
+++                                 * an escape, it's not a comment
+++                                 * string.
+++                                 */
+++                                if (s == buf || *(s - 1) != '\\')
+++                                        break;
+++                        }
+++                        ++s;
+++                }
+++                *s = '\0';
+++
+++                /* skip leading whitespace */
+++                s = buf;
+++                while (*s && isspace ((unsigned char) *s))
+++                        s++;
+++
+++                /* skip blank lines and comments */
+++                if (*s == '\0')
+++                        continue;
+++
+++                if (!p) /* head of list */
+++                        fl_https = p =
+++                            (struct filter_list *)
+++                            safecalloc (1, sizeof (struct filter_list));
+++                else {  /* next entry */
+++                        p->next =
+++                            (struct filter_list *)
+++                            safecalloc (1, sizeof (struct filter_list));
+++                        p = p->next;
+++                }
+++
+++                p->pat = safestrdup (s);
+++                p->cpat = (regex_t *) safemalloc (sizeof (regex_t));
+++                err = regcomp (p->cpat, p->pat, cflags);
+++                if (err != 0) {
+++                        fprintf (stderr,
+++                                 "Bad regex in %s: %s\n",
+++                                 config.filter_httpswhitelist, p->pat);
+++                        exit (EX_DATAERR);
+++                }
+++        }
+++        if (ferror (fd)) {
+++                perror ("fgets");
+++                exit (EX_DATAERR);
+++        }
+++        fclose (fd);
+++
+++        https_already_init = 1;
+++}
+++
+++
++ /*
++  * Initializes a linked list of strings containing hosts/urls to be filtered
++  */
++@@ -133,6 +226,25 @@ void filter_init (void)
++         already_init = 1;
++ }
++ 
+++
+++/* unlink the list */
+++void filter_https_destroy (void)
+++{
+++        struct filter_list *p, *q;
+++
+++        if (https_already_init) {
+++                for (p = q = fl_https; p; p = q) {
+++                        regfree (p->cpat);
+++                        safefree (p->cpat);
+++                        safefree (p->pat);
+++                        q = p->next;
+++                        safefree (p);
+++                }
+++                fl_https = NULL;
+++                https_already_init = 0;
+++        }
+++}
+++
++ /* unlink the list */
++ void filter_destroy (void)
++ {
++@@ -151,6 +263,19 @@ void filter_destroy (void)
++         }
++ }
++ 
+++
+++/**
+++ * reload the filter file if filtering is enabled
+++ */
+++void filter_https_reload (void)
+++{
+++        if (config.filter_httpswhitelist) {
+++                log_message (LOG_NOTICE, "Re-reading https whiltelist file.");
+++                filter_https_destroy ();
+++                filter_https_init ();
+++        }
+++}
+++
++ /**
++  * reload the filter file if filtering is enabled
++  */
++@@ -192,6 +317,33 @@ COMMON_EXIT:
++ }
++ 
++ /* returns 0 to allow, non-zero to block */
+++int filter_https_url (const char *url)
+++{
+++        struct filter_list *p;
+++        int result;
+++
+++        if (!fl_https || !https_already_init)
+++                goto COMMON_EXIT;
+++
+++        for (p = fl_https; p; p = p->next) {
+++                result =
+++                    regexec (p->cpat, url, (size_t) 0, (regmatch_t *) 0, 0);
+++
+++                if (result == 0) {
+++                	return 1;
+++                }
+++        }
+++
+++	return 0;
+++
+++COMMON_EXIT:
+++        if (default_policy == FILTER_DEFAULT_ALLOW)
+++                return 0;
+++        else
+++                return 1;
+++}
+++
+++/* returns 0 to allow, non-zero to block */
++ int filter_url (const char *url)
++ {
++         struct filter_list *p;
++diff --git a/src/filter.h b/src/filter.h
++index 8c6f270..b435585 100644
++--- a/src/filter.h
+++++ b/src/filter.h
++@@ -26,12 +26,15 @@ typedef enum {
++         FILTER_DEFAULT_DENY
++ } filter_policy_t;
++ 
+++extern void filter_https_init (void);
++ extern void filter_init (void);
+++extern void filter_https_destroy (void);
++ extern void filter_destroy (void);
+++extern void filter_https_reload (void);
++ extern void filter_reload (void);
++ extern int filter_domain (const char *host);
++ extern int filter_url (const char *url);
++-
+++extern int filter_https_url (const char *url);
++ extern void filter_set_default_policy (filter_policy_t policy);
++ 
++ #endif
++diff --git a/src/main.c b/src/main.c
++index 99e26dd..78a1c7e 100644
++--- a/src/main.c
+++++ b/src/main.c
++@@ -398,6 +398,9 @@ main (int argc, char **argv)
++ #ifdef FILTER_ENABLE
++         if (config.filter)
++                 filter_init ();
+++
+++	if(config.filter_httpswhitelist)
+++		filter_https_init();
++ #endif /* FILTER_ENABLE */
++ 
++         /* Start listening on the selected port. */
++@@ -476,6 +479,8 @@ main (int argc, char **argv)
++ #ifdef FILTER_ENABLE
++         if (config.filter)
++                 filter_destroy ();
+++	if(config.filter_httpswhitelist)
+++		filter_https_destroy ();	
++ #endif /* FILTER_ENABLE */
++ 
++         shutdown_logging ();
++diff --git a/src/reqs.c b/src/reqs.c
++index ead54ff..2bac93d 100644
++--- a/src/reqs.c
+++++ b/src/reqs.c
++@@ -35,6 +35,7 @@
++ #include "hashmap.h"
++ #include "heap.h"
++ #include "html-error.h"
+++#include "tls-error.h"
++ #include "log.h"
++ #include "network.h"
++ #include "reqs.h"
++@@ -79,6 +80,233 @@
++ #define CHECK_LWS(header, len)                                  \
++   ((len) > 0 && (header[0] == ' ' || header[0] == '\t'))
++ 
+++#define TLS_HANDSHAKE_CODE 0x16
+++#define TLS_MIN_LEN  0x02
+++#define TLS_HEADER_LEN 0x05
+++#define TLS_TYPE_CLIENT_HELLO 0x01
+++#define MSG_SIZE_BYTES 0x02
+++#define MSG_SIZE_OFFSET 0x03
+++/*
+++ * Check if a TLS client hello has been sent.
+++ * If so there is interest to know if TLS extensions are set and to what host
+++ * it is trying to be sent to.
+++ */
+++static int check_for_tls(struct conn_s *connptr, ssize_t len)
+++{
+++	ssize_t count = len;
+++	ssize_t bytes_read = 0;
+++	char *buff;
+++	ssize_t name_len;
+++	ssize_t ext_len;
+++	ssize_t data_len;
+++	ssize_t msg_len;
+++	ssize_t pos = TLS_HEADER_LEN;
+++	ssize_t name_pos = 0;
+++	ssize_t ext_pos;
+++	char *tls_msg_buff;
+++	char msg_header[TLS_HEADER_LEN];
+++	char tls_major_version;
+++	char tls_minor_version;
+++
+++	memset(msg_header,0,sizeof(msg_header));
+++	/*
+++	 * Check that we have at least the TLS min len number of bytes. The request_line is comming in
+++	 * from a readline and TLS might have a inor verions number of 0 in the third byte which could 
+++	 * terminiate the readline.
+++	 */
+++	if(len >= TLS_MIN_LEN)
+++	{
+++		if(connptr->request_line[0] == TLS_HANDSHAKE_CODE) 
+++		{
+++			connptr->is_ssl = 1;
+++			log_message( LOG_INFO, "possible TLS handshake. Looking for Server Name in extensions.");
+++			
+++			/* get the lenght of the message and read the rest */
+++			if(len >= TLS_HEADER_LEN) 
+++			{
+++				tls_major_version = connptr->request_line[1];
+++				tls_minor_version = connptr->request_line[2];
+++				memcpy(msg_header, connptr->request_line, TLS_HEADER_LEN);
+++			}
+++			/* need to read to find the message size */
+++			else
+++			{
+++		       		memcpy(msg_header, connptr->request_line, len);
+++
+++			  	do
+++		          	{
+++					buff = (char *) safemalloc(TLS_HEADER_LEN - count);
+++					if(NULL == buff)
+++					{
+++						return -1;
+++					}
+++					bytes_read = read(connptr->client_fd, buff, TLS_HEADER_LEN - count);
+++                                	memcpy(msg_header + TLS_HEADER_LEN - count, buff, bytes_read);
+++					safefree(buff);
+++					count += bytes_read;  	
+++			  	}
+++			  	while(count < TLS_MIN_LEN);	
+++			  	tls_major_version = msg_header[1];
+++				tls_minor_version = msg_header[2];
+++			}
+++			
+++			msg_len = ((unsigned char)msg_header[3] << 8) + (unsigned char)msg_header[4];
+++			connptr->tls_major_ver = tls_major_version;
+++			connptr->tls_minor_ver = tls_minor_version;	
+++			if(tls_major_version < 3 || (tls_major_version == 3 && tls_minor_version < 1)) 
+++			{
+++				log_message( LOG_INFO, 
+++						"TLS handshake does not support Server Name Indication. Version %d.%d", 
+++						tls_major_version, tls_minor_version);
+++				return -3;
+++			}
+++
+++			tls_msg_buff = (char *) safemalloc(TLS_HEADER_LEN + msg_len);
+++			if(NULL == tls_msg_buff)
+++			{
+++				return -1;
+++			}
+++			memset(tls_msg_buff, 0, TLS_HEADER_LEN + msg_len);
+++			memcpy(tls_msg_buff, msg_header, TLS_HEADER_LEN);
+++			/* need to copy the rest of the input if count is less then the msg_len */
+++			if(count < msg_len + TLS_HEADER_LEN)
+++			{
+++				memcpy(tls_msg_buff + TLS_HEADER_LEN, connptr->request_line + TLS_HEADER_LEN, count);
+++				do
+++				{
+++					buff = (char *) safemalloc(msg_len + TLS_HEADER_LEN - count);
+++					if(NULL == buff)
+++					{
+++						safefree(tls_msg_buff);
+++						return -1;
+++					}
+++					bytes_read = read(connptr->client_fd, buff, msg_len + TLS_HEADER_LEN - count);
+++					memcpy(tls_msg_buff + count, buff, bytes_read); 
+++					count += bytes_read;
+++					safefree(buff);
+++				}
+++				while(count < (msg_len + TLS_HEADER_LEN));
+++			}
+++
+++			if(tls_msg_buff[pos] != TLS_TYPE_CLIENT_HELLO)
+++			{
+++				log_message( LOG_INFO,
+++						"TLS handshake is not a client hello message type.");
+++				safefree(tls_msg_buff);
+++				return -2;
+++			}
+++
+++			/* don't care about stuff in between so jump to the items with offsets so we can skip everything not needed */
+++			pos += 38;
+++
+++
+++			/* Session ID */
+++			if(pos + 1 > (msg_len + TLS_HEADER_LEN))
+++			{
+++				safefree(tls_msg_buff);
+++				return -1;
+++			}
+++
+++			data_len = (unsigned char)tls_msg_buff[pos];
+++			pos += 1 + data_len;
+++
+++			/* In the ciphers */
+++			if(pos + 2 > (msg_len + TLS_HEADER_LEN))
+++			{
+++				safefree(tls_msg_buff);
+++				return -1;
+++			}
+++
+++			data_len = ((unsigned char)tls_msg_buff[pos] << 8) + (unsigned char)tls_msg_buff[pos + 1];
+++			pos += 2 + data_len;
+++
+++			/*In the compression */
+++			if(pos + 1 > (msg_len + TLS_HEADER_LEN))
+++			{
+++				safefree(tls_msg_buff);
+++				return -1;
+++			}
+++
+++			data_len = (unsigned char)tls_msg_buff[pos];
+++			pos += 1 + data_len;
+++
+++			/*In the extensions*/
+++			if(pos + 2 > (msg_len + TLS_HEADER_LEN))
+++			{
+++				safefree(tls_msg_buff);
+++				return -1;
+++			}
+++
+++			data_len = ((unsigned char)tls_msg_buff[pos] << 8) + (unsigned char)tls_msg_buff[pos + 1];
+++			pos += 2;
+++
+++			/* sanity check */
+++			if(pos + data_len > (msg_len + TLS_HEADER_LEN))
+++			{
+++				safefree(tls_msg_buff);
+++				return -1;
+++			}
+++
+++			/* Skip over the extensions */
+++			ext_pos = 0;
+++			while(ext_pos + 4 < data_len)
+++			{
+++				/* Extenstion length */
+++				ext_len = ((unsigned char)tls_msg_buff[pos + ext_pos + 2] << 8) + (unsigned char)tls_msg_buff[pos + ext_pos + 3];
+++				/* check if this a server name */
+++				if(tls_msg_buff[pos + ext_pos] == 0x00 && tls_msg_buff[pos + ext_pos + 1] == 0x00)
+++				{
+++					if((pos + ext_pos + 4 + ext_len) > (msg_len + TLS_HEADER_LEN))
+++					{
+++						safefree(tls_msg_buff);
+++						return -1;
+++					}
+++
+++					name_pos = 6;
+++					while((name_pos + 3) < ext_len) 
+++					{
+++						name_len = ((unsigned char)tls_msg_buff[pos + ext_pos + name_pos + 1] << 8) + (unsigned char)tls_msg_buff[pos + ext_pos + name_pos + 2];
+++
+++						if((pos + ext_pos + name_pos + 3 + name_len) > (msg_len + TLS_HEADER_LEN))
+++						{
+++							safefree(tls_msg_buff);
+++							return -1;
+++						}
+++						/*check for host name type*/
+++						if(tls_msg_buff[pos + ext_pos + name_pos] == 0x00)
+++						{
+++							connptr->server_name_indication = (char *) safemalloc(name_len + 1);
+++							if(NULL == connptr->server_name_indication)
+++							{
+++								safefree(tls_msg_buff);
+++								return -1;
+++							}
+++							memset(connptr->server_name_indication, 0, name_len + 1);
+++							memcpy(connptr->server_name_indication, tls_msg_buff + pos + ext_pos + name_pos + 3, name_len);
+++							connptr->ssl_handshake = (char *)safemalloc(TLS_HEADER_LEN + msg_len);
+++							memcpy(connptr->ssl_handshake, tls_msg_buff, TLS_HEADER_LEN + msg_len);
+++							connptr->ssl_handshake_len = TLS_HEADER_LEN + msg_len;
+++							return 0;
+++
+++						}
+++						name_pos += 3 + name_len;
+++					}
+++				}
+++				ext_pos += 4 + ext_len;
+++			}
+++
+++			if(pos + ext_pos + name_pos != (msg_len + TLS_HEADER_LEN))
+++			{
+++				return -1;
+++			}
+++
+++			return -2;
+++		}
+++	}	
+++
+++	return 0;	
+++}
+++
++ /*
++  * Read in the first line from the client (the request line for HTTP
++  * connections. The request line is allocated from the heap, but it must
++@@ -87,7 +315,8 @@
++ static int read_request_line (struct conn_s *connptr)
++ {
++         ssize_t len;
++-
+++	int first_read = 0;
+++	int tls_check_ret = 0; 
++ retry:
++         len = readline (connptr->client_fd, &connptr->request_line);
++         if (len <= 0) {
++@@ -98,21 +327,48 @@ retry:
++                 return -1;
++         }
++ 
++-        /*
++-         * Strip the new line and carriage return from the string.
++-         */
++-        if (chomp (connptr->request_line, len) == len) {
++-                /*
++-                 * If the number of characters removed is the same as the
++-                 * length then it was a blank line. Free the buffer and
++-                 * try again (since we're looking for a request line.)
++-                 */
++-                safefree (connptr->request_line);
++-                goto retry;
++-        }
++-
++-        log_message (LOG_CONN, "Request (file descriptor %d): %s",
++-                     connptr->client_fd, connptr->request_line);
+++	if(0 == first_read)
+++	{
+++		tls_check_ret = check_for_tls(connptr,len);
+++
+++		switch(tls_check_ret)
+++		{
+++			case 0:
+++				return 0;
+++			case -1:
+++				log_message(LOG_ERR,
+++					"read_request_line: Error checking for tls handshake");
+++				return -1;
+++			case -2:
+++				log_message(LOG_ERR,
+++					"read_request_line: Most likey an unsupported TLS handshake");
+++				return 0;
+++			case -3:
+++				/* already logged */
+++				return 0;
+++			default:
+++				log_message(LOG_ERR, "read_request_line: Unknown ret value check_for_tls (var: %d", tls_check_ret);
+++				return -1;
+++		}	
+++	}
+++	else
+++	{
+++		/*
+++		 * Strip the new line and carriage return from the string.
+++		 */
+++		if (chomp (connptr->request_line, len) == len) {
+++			/*
+++			 * If the number of characters removed is the same as the
+++			 * length then it was a blank line. Free the buffer and
+++			 * try again (since we're looking for a request line.)
+++			 */
+++			safefree (connptr->request_line);
+++			goto retry;
+++		}
+++
+++		log_message (LOG_CONN, "Request (file descriptor %d): %s",
+++			     connptr->client_fd, connptr->request_line);
+++	}
++ 
++         return 0;
++ }
++@@ -433,7 +689,7 @@ BAD_REQUEST_ERROR:
++         }
++ 
++ #ifdef FILTER_ENABLE
++-        /*
+++	/*
++          * Filter restricted domains/urls
++          */
++         if (config.filter) {
++@@ -1389,109 +1645,159 @@ void handle_connection (int fd)
++                 goto fail;
++         }
++ 
++-        /*
++-         * The "hashofheaders" store the client's headers.
++-         */
++-        hashofheaders = hashmap_create (HEADER_BUCKETS);
++-        if (hashofheaders == NULL) {
++-                update_stats (STAT_BADCONN);
++-                indicate_http_error (connptr, 503, "Internal error",
++-                                     "detail",
++-                                     "An internal server error occurred while processing "
++-                                     "your request. Please contact the administrator.",
++-                                     NULL);
++-                goto fail;
++-        }
++-
++-        /*
++-         * Get all the headers from the client in a big hash.
++-         */
++-        if (get_all_headers (connptr->client_fd, hashofheaders) < 0) {
++-                log_message (LOG_WARNING,
++-                             "Could not retrieve all the headers from the client");
++-                indicate_http_error (connptr, 400, "Bad Request",
++-                                     "detail",
++-                                     "Could not retrieve all the headers from "
++-                                     "the client.", NULL);
++-                update_stats (STAT_BADCONN);
++-                goto fail;
++-        }
++-
++-        /*
++-         * Add any user-specified headers (AddHeader directive) to the
++-         * outgoing HTTP request.
++-         */
++-        for (i = 0; i < vector_length (config.add_headers); i++) {
++-                http_header_t *header = (http_header_t *)
++-                        vector_getentry (config.add_headers, i, NULL);
++-
++-                hashmap_insert (hashofheaders,
++-                                header->name,
++-                                header->value, strlen (header->value) + 1);
++-        }
++-
++-        request = process_request (connptr, hashofheaders);
++-        if (!request) {
++-                if (!connptr->show_stats) {
++-                        update_stats (STAT_BADCONN);
++-                }
++-                goto fail;
++-        }
++-
++-        connptr->upstream_proxy = UPSTREAM_HOST (request->host);
++-        if (connptr->upstream_proxy != NULL) {
++-                if (connect_to_upstream (connptr, request) < 0) {
++-                        goto fail;
++-                }
++-        } else {
++-                connptr->server_fd = opensock (request->host, request->port,
++-                                               connptr->server_ip_addr);
++-                if (connptr->server_fd < 0) {
++-                        indicate_http_error (connptr, 500, "Unable to connect",
++-                                             "detail",
++-                                             PACKAGE_NAME " "
++-                                             "was unable to connect to the remote web server.",
++-                                             "error", strerror (errno), NULL);
++-                        goto fail;
++-                }
++ 
++-                log_message (LOG_CONN,
++-                             "Established connection to host \"%s\" using "
++-                             "file descriptor %d.", request->host,
++-                             connptr->server_fd);
++-
++-                if (!connptr->connect_method)
++-                        establish_http_connection (connptr, request);
++-        }
++-
++-        if (process_client_headers (connptr, hashofheaders) < 0) {
++-                update_stats (STAT_BADCONN);
++-                goto fail;
++-        }
++-
++-        if (!(connptr->connect_method && (connptr->upstream_proxy == NULL))) {
++-                if (process_server_headers (connptr) < 0) {
++-                        update_stats (STAT_BADCONN);
++-                        goto fail;
++-                }
++-        } else {
++-                if (send_ssl_response (connptr) < 0) {
++-                        log_message (LOG_ERR,
++-                                     "handle_connection: Could not send SSL greeting "
++-                                     "to client.");
++-                        update_stats (STAT_BADCONN);
++-                        goto fail;
++-                }
++-        }
++-
++-        relay_connection (connptr);
++-
++-        log_message (LOG_INFO,
++-                     "Closed connection between local client (fd:%d) "
++-                     "and remote client (fd:%d)",
++-                     connptr->client_fd, connptr->server_fd);
++-
++-        goto done;
+++	if(1 == connptr->is_ssl)
+++	{
+++		if(NULL != connptr->server_name_indication && 
+++			connptr->ssl_handshake_len > 0 && 
+++			NULL != connptr->ssl_handshake)
+++		{
+++			/* check the https whitelist for the server_name_indication 
+++			   If it is not in the list then don't connect */
+++#ifdef FILTER_ENABLE
+++			if(config.filter_httpswhitelist) 
+++			{
+++				if(0 != filter_https_url(connptr->server_name_indication))
+++				{
+++					send_tls_alert(connptr->client_fd, connptr->tls_major_ver, connptr->tls_minor_ver, 0x02, 
+++						TLS_ALERT_TYPE_FATAL, TLS_DESC_HANDSHAKE_FAILURE, NULL, 0,  NULL, 0);
+++					goto fail;
+++				}
+++			}
+++#endif
+++			connptr->server_fd = opensock (connptr->server_name_indication, HTTP_PORT_SSL,
+++						       connptr->server_ip_addr);
+++			if (connptr->server_fd < 0) {
+++				send_tls_alert(connptr->client_fd, connptr->tls_major_ver, connptr->tls_minor_ver, 0x02, 
+++					TLS_ALERT_TYPE_FATAL, TLS_DESC_HANDSHAKE_FAILURE, 
+++					NULL, 0,  NULL, 0);
+++				goto fail;
+++			}
+++
+++			log_message (LOG_CONN,
+++				     "Established connection to host \"%s\" using "
+++				     "file descriptor %d.", connptr->server_name_indication,
+++				     connptr->server_fd);
+++
+++			safe_write(connptr->server_fd, connptr->ssl_handshake, connptr->ssl_handshake_len);
+++			relay_connection (connptr);
+++			goto done;
+++		}
+++		else
+++		{
+++			send_tls_alert(connptr->client_fd, connptr->tls_major_ver, connptr->tls_minor_ver, 0x02, 
+++				TLS_ALERT_TYPE_FATAL, TLS_DESC_HANDSHAKE_FAILURE, NULL, 0,  NULL, 0);
+++			goto fail;
+++		}
+++
+++	}
+++	else
+++	{
+++
+++		/*
+++		 * The "hashofheaders" store the client's headers.
+++		 */
+++		hashofheaders = hashmap_create (HEADER_BUCKETS);
+++		if (hashofheaders == NULL) {
+++			update_stats (STAT_BADCONN);
+++			indicate_http_error (connptr, 503, "Internal error",
+++					     "detail",
+++					     "An internal server error occurred while processing "
+++					     "your request. Please contact the administrator.",
+++					     NULL);
+++			goto fail;
+++		}
+++
+++		/*
+++		 * Get all the headers from the client in a big hash.
+++		 */
+++		if (get_all_headers (connptr->client_fd, hashofheaders) < 0) {
+++			log_message (LOG_WARNING,
+++				     "Could not retrieve all the headers from the client");
+++			indicate_http_error (connptr, 400, "Bad Request",
+++					     "detail",
+++					     "Could not retrieve all the headers from "
+++					     "the client.", NULL);
+++			update_stats (STAT_BADCONN);
+++			goto fail;
+++		}
+++
+++		/*
+++		 * Add any user-specified headers (AddHeader directive) to the
+++		 * outgoing HTTP request.
+++		 */
+++		for (i = 0; i < vector_length (config.add_headers); i++) {
+++			http_header_t *header = (http_header_t *)
+++				vector_getentry (config.add_headers, i, NULL);
+++
+++			hashmap_insert (hashofheaders,
+++					header->name,
+++					header->value, strlen (header->value) + 1);
+++		}
+++
+++		request = process_request (connptr, hashofheaders);
+++		if (!request) {
+++			if (!connptr->show_stats) {
+++				update_stats (STAT_BADCONN);
+++			}
+++			goto fail;
+++		}
+++
+++		connptr->upstream_proxy = UPSTREAM_HOST (request->host);
+++		if (connptr->upstream_proxy != NULL) {
+++			if (connect_to_upstream (connptr, request) < 0) {
+++				goto fail;
+++			}
+++		} else {
+++			connptr->server_fd = opensock (request->host, request->port,
+++						       connptr->server_ip_addr);
+++			if (connptr->server_fd < 0) {
+++				indicate_http_error (connptr, 500, "Unable to connect",
+++						     "detail",
+++						     PACKAGE_NAME " "
+++						     "was unable to connect to the remote web server.",
+++						     "error", strerror (errno), NULL);
+++				goto fail;
+++			}
+++
+++			log_message (LOG_CONN,
+++				     "Established connection to host \"%s\" using "
+++				     "file descriptor %d.", request->host,
+++				     connptr->server_fd);
+++
+++			if (!connptr->connect_method)
+++				establish_http_connection (connptr, request);
+++		}
+++
+++		if (process_client_headers (connptr, hashofheaders) < 0) {
+++			update_stats (STAT_BADCONN);
+++			goto fail;
+++		}
+++
+++		if (!(connptr->connect_method && (connptr->upstream_proxy == NULL))) {
+++			if (process_server_headers (connptr) < 0) {
+++				update_stats (STAT_BADCONN);
+++				goto fail;
+++			}
+++		} else {
+++			if (send_ssl_response (connptr) < 0) {
+++				log_message (LOG_ERR,
+++					     "handle_connection: Could not send SSL greeting "
+++					     "to client.");
+++				update_stats (STAT_BADCONN);
+++				goto fail;
+++			}
+++		}
+++
+++		relay_connection (connptr);
+++
+++		log_message (LOG_INFO,
+++			     "Closed connection between local client (fd:%d) "
+++			     "and remote client (fd:%d)",
+++			     connptr->client_fd, connptr->server_fd);
+++
+++		goto done;
+++	}
++ 
++ fail:
++         /*
++diff --git a/src/tls-error.c b/src/tls-error.c
++new file mode 100644
++index 0000000..a9b46c8
++--- /dev/null
+++++ b/src/tls-error.c
++@@ -0,0 +1,106 @@
+++/* tinyproxy - A fast light-weight HTTP proxy
+++ * Copyright (C) 2014 Truman Lackey <lacktrum@gmail.com>
+++ *
+++ * This program is free software; you can redistribute it and/or modify
+++ * it under the terms of the GNU General Public License as published by
+++ * the Free Software Foundation; either version 2 of the License, or
+++ * (at your option) any later version.
+++ *
+++ * This program is distributed in the hope that it will be useful,
+++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+++ * GNU General Public License for more details.
+++ *
+++ * You should have received a copy of the GNU General Public License along
+++ * with this program; if not, write to the Free Software Foundation, Inc.,
+++ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+++ */
+++
+++
+++#include "common.h"
+++#include "tls-error.h"
+++#include "heap.h"
+++#include "network.h"
+++
+++void send_tls_alert(int fd, unsigned char tls_major_ver, 
+++	unsigned char tls_minor_ver, unsigned int msg_len, unsigned char level, unsigned char description, 
+++	char *MAC, ssize_t mac_len,  char *padding, ssize_t padding_len)
+++{
+++
+++	char *msg_buff;
+++	/* notify the client of the failure */
+++	tls_alert_msg msg;
+++	init_tls_alert_msg(&msg, tls_major_ver, 
+++		tls_minor_ver, msg_len, level, description, 
+++		MAC, mac_len,  padding, padding_len);
+++	
+++	msg_buff = (char *)safecalloc(1, 7 + mac_len + padding_len);
+++	if(NULL == msg_buff)
+++	{
+++		destroy_tls_alert_msg(&msg);
+++		return;
+++	}	
+++	
+++	memcpy(msg_buff, &msg, 7);
+++	if(mac_len > 0 && NULL != MAC)
+++	{
+++		memcpy(msg_buff + 7, MAC, mac_len);
+++	}
+++
+++	if(padding_len > 0 && NULL != padding)
+++	{
+++		memcpy(msg_buff + 7 + mac_len, padding, padding_len);
+++	}
+++
+++	safe_write(fd, msg_buff, 7 + mac_len + padding_len);
+++	destroy_tls_alert_msg(&msg);
+++	safefree(msg_buff);	
+++}
+++
+++int init_tls_alert_msg(tls_alert_msg *msg, unsigned char tls_major_ver, 
+++	unsigned char tls_minor_ver, unsigned int msg_len, unsigned char level, unsigned char description, 
+++	char *MAC, ssize_t mac_len,  char *padding, ssize_t padding_len)
+++{
+++	msg->signature = TLS_ALERT_SIG;
+++	msg->tls_major_ver = tls_major_ver;
+++	msg->tls_minor_ver = tls_minor_ver;
+++	msg->msg_len = msg_len;
+++	msg->level = level;
+++	msg->description = description;
+++	
+++	if(NULL != MAC)
+++	{
+++		msg->MAC = (char *)safecalloc(1, mac_len);
+++
+++		if(NULL == msg->MAC)
+++		{
+++			return -1;
+++		}
+++		memcpy(msg->MAC,MAC,mac_len);
+++	}
+++
+++	if(NULL != padding)
+++	{
+++		msg->padding = (char *)safecalloc(1, padding_len);
+++		if(NULL == msg->padding)
+++		{
+++			if(NULL != msg->MAC)
+++			{
+++				safefree(msg->MAC);
+++			}
+++			return -1;
+++		}
+++		memcpy(msg->padding,padding,padding_len);
+++	}
+++
+++	return 0;
+++}
+++
+++void destroy_tls_alert_msg(tls_alert_msg *msg)
+++{
+++	if(msg->MAC)
+++		safefree(msg->MAC);
+++
+++	if(msg->padding)
+++		safefree(msg->padding);
+++}
++diff --git a/src/tls-error.h b/src/tls-error.h
++new file mode 100644
++index 0000000..082e37f
++--- /dev/null
+++++ b/src/tls-error.h
++@@ -0,0 +1,48 @@
+++/* tinyproxy - A fast light-weight HTTP proxy
+++ * Copyright (C) 2013 Truman Lackey <lacktrum@gmail.com>
+++ *
+++ * This program is free software; you can redistribute it and/or modify
+++ * it under the terms of the GNU General Public License as published by
+++ * the Free Software Foundation; either version 2 of the License, or
+++ * (at your option) any later version.
+++ *
+++ * This program is distributed in the hope that it will be useful,
+++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+++ * GNU General Public License for more details.
+++ *
+++ * You should have received a copy of the GNU General Public License along
+++ * with this program; if not, write to the Free Software Foundation, Inc.,
+++ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+++ */
+++
+++
+++#ifndef TINYPROXY_TLS_ERROR_H
+++#define TINYPROXY_TLS_ERROR_H
+++
+++#define TLS_ALERT_SIG 0x15
+++#define TLS_ALERT_TYPE_WARN 0x01
+++#define TLS_ALERT_TYPE_FATAL 0x02
+++
+++#define TLS_DESC_HANDSHAKE_FAILURE 0X28
+++
+++typedef struct 
+++{
+++	unsigned char signature;
+++	unsigned char tls_major_ver;
+++	unsigned char tls_minor_ver;
+++	uint16_t msg_len;
+++	unsigned char level;
+++	unsigned char description;
+++	char *MAC;
+++	char *padding;
+++}tls_alert_msg;
+++
+++void send_tls_alert(int fd, unsigned char tls_major_ver, 
+++	unsigned char tls_minor_ver, unsigned int msg_len, unsigned char level, unsigned char description, 
+++	char *MAC, ssize_t mac_len,  char *padding, ssize_t padding_len);
+++int init_tls_alert_msg(tls_alert_msg *msg, unsigned char tls_major_ver, 
+++	unsigned char tls_minor_ver, unsigned int msg_len, unsigned char level, unsigned char description, 
+++	char *MAC, ssize_t mac_len,  char *padding, ssize_t padding_len);
+++void destroy_tls_alert_msg(tls_alert_msg *msg);
+++#endif /* !TINYPROXY_TLS_ERROR_H */
