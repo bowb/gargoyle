@@ -1,6 +1,7 @@
---- a/configure
-+++ b/configure
-@@ -861,7 +861,7 @@ sysconfdir='${prefix}/etc'
+diff -ruN a/configure b/configure
+--- a/configure	2014-01-05 14:44:59.467685359 -0700
++++ b/configure	2014-01-05 14:48:44.444104253 -0700
+@@ -827,7 +827,7 @@
  sharedstatedir='${prefix}/com'
  localstatedir='${prefix}/var'
  includedir='${prefix}/include'
@@ -9,17 +10,17 @@
  docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
  infodir='${datarootdir}/info'
  htmldir='${docdir}'
-@@ -6317,7 +6317,7 @@ $as_echo_n "checking for zlib... " >&6; 
+@@ -5265,7 +5265,7 @@
  # Check whether --with-zlib was given.
- if test "${with_zlib+set}" = set; then
+ if test "${with_zlib+set}" = set; then :
    withval=$with_zlib;  # check for header & func (in library) in given prefix
 -	CPPFLAGS="${CPPFLAGS} -I${withval}/include"
 +	CPPFLAGS="${CPPFLAGS}"
  	if test "x$staticzlib" = "xtrue"; then
  		LIBS="-Bstatic -L${withval} -lz -Bdynamic ${LIBS}"
  	else
-@@ -10042,7 +10042,7 @@ _ACEOF
- if test "${with_libiconv+set}" = set; then
+@@ -7095,7 +7095,7 @@
+ if test "${with_libiconv+set}" = set; then :
    withval=$with_libiconv;  # check for header & func (in library) in given prefix
  			if test "x$withval" != "x"; then
 -				CPPFLAGS="${CPPFLAGS} -I${withval}/include"
