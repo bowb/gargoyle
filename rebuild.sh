@@ -365,6 +365,11 @@ for target in $targets ; do
 		done
 	
 
+		#copy the files directory to the target
+		files_dir="$targets_dir/$target/files/"
+		if [ -d "$files_dir" ] ; then
+			cp -r "$files_dir" "$target-src"
+		fi
 
 		# specify default build profile	
 		default_profile="default"
