@@ -1,0 +1,38 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2011 OpenWrt.org
+
+START=40
+STOP=50
+
+CFGFILE=/etc/dansguardian/dansguardian.conf
+LOGDIR=/var/log/dansguardian
+LOGFILE=access.log
+start() {
+	if [ ! -d "$LOGDIR" ]; then
+		mkdir -p "$LOGDIR"
+		touch "$LOGDIR/$LOGFILE"
+	fi
+	
+	if [ ! -f "$LOGDIR/$LOGFILE" ]; then
+		touch "$LOGDIR/$LOGFILE"
+	fi
+	 
+	[ -x /usr/sbin/dansguardian ] && /usr/sbin/dansguardian -c $CFGFILE > /dev/null && echo -e ' dansguardian\c'
+}
+
+stop() {
+ 	if [ -e /var/run/dansguardian.pid ]; then
+		PID=`cat /var/run/dansguardian.pid`
+	fi
+	
+	/usr/sbin/dansguardian -q
+	[ -r /tmp/.dguardianipc ] && echo -e ' dansguardian\c'
+ 	rm -f /tmp/.dguardianipc
+	
+	if [ ! "x$PID" = "x" ]; then
+ 		while [ -e /proc/"$PID" -a /proc/"$PID"/exe ]
+ 		do
+ 			sleep 1
+ 		done
+	fi
+}

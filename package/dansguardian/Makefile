@@ -57,6 +57,8 @@ define Package/dansguardian/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/dansguardian/transparent1x1.gif $(1)/usr/share/dansguardian/
 	$(INSTALL_DIR) $(1)/usr/share/dansguardian/languages/ukenglish
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/dansguardian/languages/ukenglish/* $(1)/usr/share/dansguardian/languages/ukenglish/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/dansguardian.init $(1)/etc/init.d/dansguardian
 endef
 
 $(eval $(call BuildPackage,dansguardian))
