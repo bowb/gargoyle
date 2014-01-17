@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+
+START=56
+
+start()
+{
+        gdisplay=$(uci get gargoyle.display.connection_webfilter 2>/dev/null)
+        if [ -z "$gdisplay" ] ; then
+                uci set gargoyle.display.connection_webfilter='Webfilter'
+                uci set gargoyle.scripts.connection_webfilter='webfilter.sh'
+                uci set gargoyle.connection.webfilter='500'
+                uci commit gargoyle
+        fi
+	add_include_file
+}
+
+add_include_file()
+{
+	include=$(uci get firewall.@include[2].path 2>/dev/null)
+	if [ -z "$include" ]; then
+		uci add firewall include > /dev/null
+		uci set firewall.@include[2]=include
+		uci set firewall.@include[2].path=/etc/webfilter.rule
+		uci commit firewall
+	fi
+}
