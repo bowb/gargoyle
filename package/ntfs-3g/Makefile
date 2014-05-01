@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2010 OpenWrt.org
+# Copyright (C) 2007-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,32 +10,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ntfs-3g
 PKG_RELEASE:=1
 
-# 2011.4.12 integrates ntfsprogs and changed srcfile name
-PKG_VERSION:=2011.4.12
-# disable next line and do _not_ select ntfsprogs_ntfs-3g to build an older version
+PKG_VERSION:=2014.2.15
 PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_VERSION).tgz
-
-## 2010.3.6 needs a recent uclibc 0.9.30.2 or greater
-## this has been fixed in 2010.5.16, keeping this in case this happens again
-#PKG_UCLIBC_VERSION:=$(call qstrip,$(CONFIG_UCLIBC_VERSION))
-#ifneq (,$(or $(findstring !0.9.29,!$(PKG_UCLIBC_VERSION)),$(findstring !0.9.30.1!,!$(PKG_UCLIBC_VERSION)!) ))
-#	PKG_VERSION:=2010.1.16
-#endif
-
-PATCH_DIR:=./patches-$(PKG_VERSION)
-
-PKG_SOURCE?=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://www.tuxera.com/opensource/
-
-PKG_MD5SUM_2010.1.16:=e104c914e8d7d29ee83e63d46afbba25
-PKG_MD5SUM_2010.3.6:=12ce21aa044c6068a4df6e8cbd3c5cfa
-PKG_MD5SUM_2010.5.16:=aeff7659a4943c9223d79116f051a863
-PKG_MD5SUM_2010.5.22:=caa08c73220a7106c76f697b7a7915ec
-PKG_MD5SUM_2010.8.8:=6c109746c2708f679725a2ea441c61c6
-PKG_MD5SUM_2010.10.2:=91405690f25822142cdcb43d03e62d3f
-PKG_MD5SUM_2011.1.15:=15a5cf5752012269fa168c24191f00e2
-PKG_MD5SUM_2011.4.12:=9c4ce318373b15332239a77a9d2a39fe
-PKG_MD5SUM:=$(PKG_MD5SUM_$(PKG_VERSION))
+PKG_MD5SUM:=f11d563816249d730a00498983485f3a
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -99,7 +77,7 @@ define Package/ntfs-3g-low/description
    - lowntfs-3g
    - mount.lowntfs-3g (symlink to lowntfs-3g)
 
-  A driver variant using the fuse low-level interface missing some of the 
+  A driver variant using the fuse low-level interface missing some of the
   enhanced functionality for streams or the like. You might want to check:
   http://www.tuxera.com/community/ntfs-3g-manual/
 
@@ -121,10 +99,18 @@ define Package/ntfs-3g-utils/description
 
 endef
 
+# TODO: write a proper description
+# new in 2001.4.12
+define Package/ntfsprogs_ntfs-3g
+  $(call Package/ntfs-3g/common)
+  TITLE:=ntfsprogs (ntfs-3g)
+  DEPENDS+= +ntfs-3g +libgcrypt +libuuid
+endef
+
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--disable-ntfsprogs
+	--with-uuid
 
 # configure/make according selection
 ifdef CONFIG_PACKAGE_NTFS-3G_USE_LIBFUSE
@@ -133,6 +119,13 @@ ifdef CONFIG_PACKAGE_NTFS-3G_USE_LIBFUSE
 else
 	CONFIGURE_ARGS += --with-fuse=internal
 	TARGET_CPPFLAGS:=-I../include/fuse-lite $(TARGET_CPPFLAGS)
+endif
+
+# enable disable ntfsprogs
+ifneq ($(CONFIG_PACKAGE_ntfsprogs_ntfs-3g)$(SDK)$(DEVELOPER),)
+	CONFIGURE_ARGS += --enable-ntfsprogs
+else
+	CONFIGURE_ARGS += --disable-ntfsprogs
 endif
 
 # redefine prepare to extract to our build dir
@@ -206,6 +199,16 @@ define Package/ntfs-3g-utils/install
 	$(FIND) $(PKG_INSTALL_DIR)/usr/bin/ -type f ! -name ntfs-3g.probe ! -name ntfs-3g -exec $(INSTALL_BIN) {} $(1)/usr/bin/ \;
 endef
 
+define Package/ntfsprogs_ntfs-3g/install
+	$(INSTALL_DIR) $(1)/sbin
+	$(CP) $(PKG_INSTALL_DIR)/sbin/mkfs.ntfs $(1)/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(FIND) $(PKG_INSTALL_DIR)/usr/bin/ -type f ! -regex '.*[^/]*ntfs-3g[^/]*' -exec $(INSTALL_BIN) {} $(1)/usr/bin/ \;
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
+endef
+
 $(eval $(call BuildPackage,ntfs-3g))
 $(eval $(call BuildPackage,ntfs-3g-low))
 $(eval $(call BuildPackage,ntfs-3g-utils))
+$(eval $(call BuildPackage,ntfsprogs_ntfs-3g))

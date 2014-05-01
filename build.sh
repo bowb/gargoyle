@@ -37,16 +37,16 @@ set_version_variables()
 {
 
 	#openwrt branch
-	branch_name="Attitude Adjustment"
-	branch_id="attitude_adjustment"
-	branch_is_trunk="0"
+	branch_name="Barrier Breaker"
+	branch_id="barrier_breaker"
+	branch_is_trunk="1"
 	branch_packages_path="branches/packages_12.09"
 
 
 	# set svn revision number to use 
 	# you can set this to an alternate revision 
 	# or empty to checkout latest 
-	rnum=38347
+	#rnum=38347
 
 	#set date here, so it's guaranteed the same for all images
 	#even though build can take several hours
@@ -215,7 +215,8 @@ distrib_init ()
 	fi
 	#git log --since=5/16/2013 $(git log -1 --pretty=format:%h) --pretty=format:"%h%x09%ad%x09%s" --date=short > "$top_dir/Distribution/changelog.txt"
 	git log $(git describe --abbrev=0 --tags)..$(git log -1 --pretty=format:%h) --no-merges --pretty=format:"%h%x09%ad%x09%s" --date=short > "$top_dir/Distribution/Gargoyle changelog.txt"
-	svn log -r "$rnum":36425 svn://svn.openwrt.org/openwrt/branches/attitude_adjustment/ > "$top_dir/Distribution/OpenWrt changelog.txt"
+	#svn log -r "$rnum":36425 svn://svn.openwrt.org/openwrt/branches/attitude_adjustment/ > "$top_dir/Distribution/OpenWrt changelog.txt"
+	svn log -l 10 svn://svn.openwrt.org/openwrt/trunk > "$top_dir/Distribution/OpenWrt changelog.txt"
 	cp -fR "$top_dir/LICENSES" "$top_dir/Distribution/"
 }
 

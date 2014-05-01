@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/mad
 PKG_MD5SUM:=e5808ad997ba32c498803822078748c3
 
+PKG_LICENSE:=GPLv2
+PKG_LICENSE_FILES:=COPYING
+
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -29,11 +32,13 @@ define Package/libid3tag
 endef
 
 define Package/libid3tag/description
-	libid3tag is a library for reading and (eventually) writing ID3 tags, both 
+	libid3tag is a library for reading and (eventually) writing ID3 tags, both
 	ID3v1 and the various versions of ID3v2.
 endef
 
 TARGET_CFLAGS += $(FPIC)
+
+CONFIGURE_VARS += CC="$(TARGET_CC) $(TARGET_CFLAGS)"
 
 define Build/Configure
 	$(call Build/Configure/Default, \

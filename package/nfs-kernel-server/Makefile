@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=1.2.6
+PKG_VERSION:=1.2.9
 PKG_RELEASE:=1
-PKG_MD5SUM:=8be543ca270c2234ff18f8c8d35e0d37
+PKG_MD5SUM:=18869d16db3f49c053f8c68eba3fe2e0
 
 PKG_SOURCE_URL:=@SF/nfs
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.bz2
@@ -124,18 +124,13 @@ define Host/Install
 endef
 
 define Package/nfs-kernel-server/install
-	$(INSTALL_DIR) $(1)/etc/init.d 
-	$(INSTALL_DIR) $(1)/usr/sbin 
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/nfsd.exports  $(1)/etc/exports
-	$(INSTALL_BIN)  ./files/nfsd.init     $(1)/etc/init.d/nfsd
-	$(INSTALL_DATA) ./files/nfsd.conf     $(1)/etc/config/nfsd
-
-
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/sm-notify   $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/statd       $(1)/usr/sbin/rpc.statd
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsd/nfsd         $(1)/usr/sbin/rpc.nfsd
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/mountd/mountd     $(1)/usr/sbin/rpc.mountd
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/usr/sbin
+	$(INSTALL_DATA) ./files/nfsd.exports $(1)/etc/exports
+	$(INSTALL_BIN) ./files/nfsd.init $(1)/etc/init.d/nfsd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/sm-notify $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/statd $(1)/usr/sbin/rpc.statd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsd/nfsd $(1)/usr/sbin/rpc.nfsd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/mountd/mountd $(1)/usr/sbin/rpc.mountd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/exportfs/exportfs $(1)/usr/sbin/
 endef
 

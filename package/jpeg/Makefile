@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2006-2012 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)src.v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ijg.org/files/ \
         ftp://ftp.uu.net/graphics/jpeg/
 PKG_MD5SUM:=dbd5f3b47ed13132f04c685d608a7547
+
+PKG_LICENSE:=FREE
+PKG_LICENSE_FILES:=README
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=libltdl
