@@ -4,11 +4,11 @@ START=56
 
 start()
 {
-        gdisplay=$(uci get gargoyle.display.connection_tinyproxy 2>/dev/null)
+        gdisplay=$(uci get gargoyle.display.connection_webfilter 2>/dev/null)
         if [ -z "$gdisplay" ] ; then
-                uci set gargoyle.display.connection_tinyproxy='Tinyproxy'
-                uci set gargoyle.scripts.connection_tinyproxy='tinyproxy.sh'
-                uci set gargoyle.connection.tinyproxy='500'
+                uci set gargoyle.display.connection_webfilter='Webfilter'
+                uci set gargoyle.scripts.connection_tinyproxy='webfilter.sh'
+                uci set gargoyle.connection.webfilter='500'
                 uci commit gargoyle
         fi
 	add_include_file
@@ -20,7 +20,7 @@ add_include_file()
 	if [ -z "$include" ]; then
 		uci add firewall include > /dev/null
 		uci set firewall.@include[2]=include
-		uci set firewall.@include[2].path=/etc/tinyproxy.rule
+		uci set firewall.@include[2].path=/etc/webfilter.rule
 		uci commit firewall
 	fi
 }
